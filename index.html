@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wayne's Manor – Cat Health Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Rajdhani:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090e;--s:#0d1018;--s2:#131924;--bd:#1c2438;
+  --am:#e8b400;--am2:#c49a00;--tl:#2a8fa8;--ro:#e05068;--gn:#3db86a;--vi:#8b6fd4;--or:#d4722a;--bl:#3a6fd4;
+  --mu:#4a5472;--tx:#ede8d8;--t2:#8a90a8;--r:8px;
+  --bat:#0d1828;--gold-glow:rgba(232,180,0,.25);
+}
+html,body{min-height:100%;overflow-x:hidden}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;background-image:radial-gradient(ellipse at 20% 0%,rgba(232,180,0,.04) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(13,24,40,.8) 0%,transparent 60%)}
+
+/* ── NAV ── */
+.nav{display:flex;align-items:center;gap:10px;padding:11px 20px;border-bottom:1px solid var(--bd);background:rgba(7,9,14,.97);position:sticky;top:0;z-index:999;flex-wrap:wrap;box-shadow:0 2px 24px rgba(0,0,0,.6)}
+.logo{display:flex;align-items:center;gap:9px;margin-right:6px}
+.lico{width:30px;height:30px;background:linear-gradient(135deg,#1a1400,#3a2e00);border:1px solid var(--am2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:0 0 10px rgba(232,180,0,.2)}
+.ltx{font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--tx)}
+.ltx span{color:var(--am);text-shadow:0 0 12px rgba(232,180,0,.4)}
+.nav-tabs{display:flex;gap:2px;background:rgba(13,16,24,.8);padding:3px;border-radius:6px;border:1px solid var(--bd);flex-wrap:nowrap;overflow-x:auto;max-width:calc(100vw - 200px);scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nt{font-family:'DM Mono',monospace;font-size:10px;padding:5px 11px;border:none;border-radius:4px;background:none;color:var(--mu);cursor:pointer;transition:all .18s;user-select:none;letter-spacing:.03em}
+.nt.active{background:linear-gradient(135deg,#1a1400,#2a2000);color:var(--am);border:1px solid rgba(232,180,0,.3);box-shadow:0 0 8px rgba(232,180,0,.15)}
+.nt:hover:not(.active){color:var(--t2);background:rgba(232,180,0,.04)}
+.save-indicator{font-family:'DM Mono',monospace;font-size:10px;color:var(--gn);margin-left:auto;opacity:0;transition:opacity .4s;letter-spacing:.05em}
+.save-indicator.show{opacity:1}
+
+/* ── PAGES ── */
+.page{display:none;padding:16px 16px 60px;max-width:960px;margin:0 auto}
+.page.active{display:block}
+
+/* ── CARDS ── */
+.card{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,180,0,.3),transparent)}
+.ctitle{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:11px;display:flex;align-items:center;gap:5px}
+
+/* ── PET BANNER ── */
+.pbanner{background:linear-gradient(135deg,#0d1020,#0a0d18);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative;overflow:hidden}
+.pbanner::after{content:'🦇';position:absolute;right:16px;bottom:-4px;font-size:52px;opacity:.05;pointer-events:none}
+.pav{width:44px;height:44px;background:linear-gradient(135deg,#1a1400,#2a2200);border-radius:50%;border:2px solid var(--am2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 0 12px rgba(232,180,0,.2)}
+.pi h2{font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:.05em;color:var(--tx)}
+.pi p{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);margin-top:2px}
+.stat-pills{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+.pill{background:rgba(13,16,24,.9);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;text-align:center;min-width:60px}
+.pill-n{font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--am)}
+.pill-l{font-family:'DM Mono',monospace;font-size:8px;color:var(--mu);margin-top:1px;letter-spacing:.04em}
+
+/* ── FORM ── */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:11px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);font-family:'DM Mono',monospace}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-family:'DM Mono',monospace;font-size:11px;padding:8px 10px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--am);box-shadow:0 0 0 2px rgba(232,180,0,.1)}
+textarea{resize:vertical;min-height:55px;line-height:1.6}
+select option{background:#131924}
+
+/* ── SLIDERS ── */
+.srow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.slbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);min-width:72px;font-family:'DM Mono',monospace}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--bd);border:none;padding:0;cursor:pointer;flex:1;min-width:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--am);border:2px solid var(--bg);cursor:pointer;box-shadow:0 0 6px rgba(232,180,0,.4)}
+.sval{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--am);min-width:34px;text-align:right}
+
+/* ── TOGGLES ── */
+.tog-section{margin-bottom:11px}
+.tog-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:6px;font-family:'DM Mono',monospace}
+.tog-row{display:flex;gap:5px;flex-wrap:wrap}
+.tog{font-family:'DM Mono',monospace;font-size:10px;padding:5px 10px;border-radius:4px;border:1px solid var(--bd);background:var(--s2);color:var(--t2);cursor:pointer;transition:all .15s;user-select:none;-webkit-user-select:none;display:inline-block;position:relative;z-index:1;letter-spacing:.02em}
+.tog:hover{border-color:var(--am);color:var(--am)}
+.tog.sel-amber{background:rgba(232,180,0,.12);border-color:var(--am);color:var(--am);box-shadow:0 0 6px rgba(232,180,0,.15)}
+.tog.sel-red{background:rgba(224,80,104,.12);border-color:var(--ro);color:var(--ro)}
+.tog.sel-teal{background:rgba(42,143,168,.12);border-color:var(--tl);color:var(--tl)}
+.tog.sel-green{background:rgba(61,184,106,.12);border-color:var(--gn);color:var(--gn)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;user-select:none;letter-spacing:.04em;text-transform:uppercase}
+.btn-am{background:linear-gradient(135deg,var(--am),var(--am2));color:#07090e}
+.btn-am:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(232,180,0,.35)}
+.btn-full{width:100%;margin-top:10px}
+.btn-sm{font-family:'DM Mono',monospace;font-size:10px;background:none;border:1px solid var(--bd);color:var(--t2);padding:5px 11px;border-radius:5px;cursor:pointer;transition:all .18s;letter-spacing:.02em}
+.btn-sm:hover{border-color:var(--am);color:var(--am)}
+.btn-danger{font-family:'DM Mono',monospace;font-size:10px;background:none;border:1px solid rgba(224,80,104,.3);color:var(--ro);padding:5px 11px;border-radius:5px;cursor:pointer;transition:all .18s}
+.btn-danger:hover{border-color:var(--ro);background:rgba(224,80,104,.08)}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);padding:6px 8px;text-align:left;border-bottom:1px solid var(--bd)}
+.tbl td{padding:7px 8px;border-bottom:1px solid rgba(28,36,56,.5);color:var(--t2)}
+.tbl tr:hover td{background:rgba(232,180,0,.03)}
+.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.04em;font-family:'DM Mono',monospace}
+.bg{background:rgba(61,184,106,.12);color:var(--gn)}
+.br{background:rgba(224,80,104,.12);color:var(--ro)}
+.by{background:rgba(232,180,0,.12);color:var(--am)}
+.bt{background:rgba(42,143,168,.12);color:var(--tl)}
+.bv{background:rgba(139,111,212,.12);color:var(--vi)}
+.bbl{background:rgba(58,111,212,.12);color:var(--bl)}
+.delbtn{background:none;border:none;color:var(--mu);cursor:pointer;font-size:11px;padding:2px 4px}
+.delbtn:hover{color:var(--ro)}
+
+/* ── ENERGY BAR ── */
+.enbar{display:flex;align-items:center;gap:5px}
+.entrack{flex:1;height:4px;background:var(--bd);border-radius:2px;overflow:hidden;min-width:36px}
+.enfill{height:100%;border-radius:2px}
+
+/* ── CHARTS ── */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:12px}
+.cbox{background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
+.cbox.wide{grid-column:1/-1}
+.ctit{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:10px;font-family:'DM Mono',monospace}
+.cwrap{position:relative;height:170px}
+.cwrap.tall{height:230px}
+
+/* ── BRAND CARDS ── */
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:12px}
+.bcard{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.bcard::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.b-rec::after{background:var(--gn)}.b-neu::after{background:var(--am)}.b-avo::after{background:var(--ro)}
+.bname{font-size:13px;font-weight:700;margin-bottom:2px;font-family:'Rajdhani',sans-serif;letter-spacing:.03em}
+.btype{font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);margin-bottom:9px}
+.bstat{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);margin-bottom:4px}
+.bstat strong{color:var(--tx)}
+.mbar{height:3px;background:var(--bd);border-radius:2px;margin:3px 0 7px;overflow:hidden}
+.mfill{height:100%;border-radius:2px}
+
+/* ── CHIPS ── */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--bd);border-radius:5px;padding:5px 10px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace}
+.cdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dg{background:var(--gn)}.dy{background:var(--am)}.dr{background:var(--ro)}.dt{background:var(--tl)}
+
+/* ── ANALYSIS CARDS ── */
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-bottom:12px}
+.acard{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.acard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.a1::before{background:var(--am)}.a2::before{background:var(--tl)}.a3::before{background:var(--ro)}
+.a4::before{background:var(--vi)}.a5::before{background:var(--gn)}.a6::before{background:var(--or)}
+.albl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;font-family:'DM Mono',monospace}
+.a1 .albl{color:var(--am)}.a2 .albl{color:var(--tl)}.a3 .albl{color:var(--ro)}
+.a4 .albl{color:var(--vi)}.a5 .albl{color:var(--gn)}.a6 .albl{color:var(--or)}
+.abody{font-size:11px;line-height:1.8;color:var(--t2);font-family:'Rajdhani',sans-serif;font-size:12px}
+.abody strong{color:var(--tx)}
+.awide{grid-column:1/-1}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;color:var(--mu)}
+.empty .eico{font-size:32px;margin-bottom:10px}
+.empty p{font-size:12px;line-height:1.7;font-family:'DM Mono',monospace}
+
+/* ── ROUTINE CARDS ── */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.rcard{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:10px}
+.rhead{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:6px;font-family:'DM Mono',monospace}
+.ritem{font-size:11px;color:var(--t2);margin-bottom:3px;display:flex;gap:5px;align-items:flex-start;font-family:'Rajdhani',sans-serif;font-size:12px}
+.rdot{width:3px;height:3px;border-radius:50%;background:var(--am);margin-top:6px;flex-shrink:0}
+.rkcal{font-family:'DM Mono',monospace;font-size:9px;color:var(--am);margin-top:4px}
+
+/* ── STORAGE BAR ── */
+.storage-bar{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:11px}
+.storage-bar span{color:var(--t2)}
+.storage-bar strong{color:var(--gn)}
+
+/* ── HEADINGS using Cinzel ── */
+h1,h2,.serif-head{font-family:'Cinzel',serif}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--am2)}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="logo"><div class="lico">🦇</div><div class="ltx">Wayne's <span>Manor</span></div></div>
+  <div class="nav-tabs">
+    <button class="nt active" id="tab-log">📝 Log</button>
+    <button class="nt" id="tab-charts">📊 Charts</button>
+    <button class="nt" id="tab-brands">🏷️ Brands</button>
+    <button class="nt" id="tab-analysis">🔬 Analysis</button>
+    <button class="nt" id="tab-care">🏠 Care</button>
+    <button class="nt" id="tab-training">🎓 Training</button>
+    <button class="nt" id="tab-medical">🏥 Medical</button>
+    <button class="nt" id="tab-sos">🚨 SOS</button>
+    <button class="nt" id="tab-supplies">🛒 Supplies</button>
+    <button class="nt" id="tab-milestones">🎉 Milestones</button>
+    <button class="nt" id="tab-budget">💰 Budget</button>
+  </div>
+  <span class="save-indicator" id="save-indicator">✓ Saved</span>
+</div>
+
+<!-- ══ LOG ══ -->
+<div class="page active" id="page-log">
+
+  <div class="pbanner">
+    <div class="pav">🐱</div>
+    <div class="pi"><h2>Wayne</h2><p>Male · ~11 lbs · 1 yr · Orijen + Greenies</p></div>
+    <div class="stat-pills">
+      <div class="pill"><div class="pill-n" id="s-days">0</div><div class="pill-l">Days</div></div>
+      <div class="pill"><div class="pill-n" id="s-en">—</div><div class="pill-l">Avg Energy</div></div>
+      <div class="pill"><div class="pill-n" id="s-score">—</div><div class="pill-l">Score/10</div></div>
+    </div>
+  </div>
+
+  <!-- Storage bar -->
+  <div class="storage-bar" id="storage-bar">
+    <span>💾 Auto-save: <strong id="storage-status">Loading…</strong></span>
+    <span id="storage-count" style="color:var(--mu)"></span>
+    <button class="btn-danger" id="clear-data-btn" style="margin-left:auto">🗑 Clear All Data</button>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">📋 Wayne's Daily Routine</div>
+    <div class="rgrid">
+      <div class="rcard"><div class="rhead">🌅 Morning</div>
+        <div class="ritem"><span class="rdot"></span>½ can Orijen wet (45 kcal)</div>
+        <div class="ritem"><span class="rdot"></span>2½ tbsp Orijen dry (80 kcal)</div>
+        <div class="ritem"><span class="rdot"></span>15 min play</div>
+        <div class="rkcal">~125 kcal</div>
+      </div>
+      <div class="rcard"><div class="rhead">🌙 Evening</div>
+        <div class="ritem"><span class="rdot"></span>½ can Orijen wet (45 kcal)</div>
+        <div class="ritem"><span class="rdot"></span>2½ tbsp Orijen dry (80 kcal)</div>
+        <div class="ritem"><span class="rdot"></span>15 min play</div>
+        <div class="rkcal">~125 kcal</div>
+      </div>
+      <div class="rcard"><div class="rhead">🦷 Treats</div>
+        <div class="ritem"><span class="rdot"></span>Greenies dental × 9</div>
+        <div class="ritem"><span class="rdot"></span>Given 2× daily</div>
+        <div class="rkcal">~25 kcal</div>
+      </div>
+      <div class="rcard"><div class="rhead">🏠 Home</div>
+        <div class="ritem"><span class="rdot"></span>Fumoi 95L self-cleaning</div>
+        <div class="ritem"><span class="rdot"></span>2 water fountains</div>
+        <div class="ritem"><span class="rdot"></span>Scratchers + trees</div>
+        <div class="rkcal">Total ~280 kcal/day</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">✏️ Log Today's Entry</div>
+    <div class="fgrid">
+      <div class="fg"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="fg"><label>Weight (lbs)</label><input type="number" id="f-weight" placeholder="11.0" step="0.1" min="6" max="20"></div>
+      <div class="fg"><label>Food Brand</label>
+        <select id="f-food">
+          <option value="Orijen">Orijen (wet + dry)</option>
+          <option value="Orijen Dry Only">Orijen Dry Only</option>
+          <option value="Orijen Wet Only">Orijen Wet Only</option>
+          <option value="Fancy Feast">Fancy Feast</option>
+          <option value="Royal Canin">Royal Canin</option>
+          <option value="Wellness">Wellness</option>
+          <option value="Purina Pro Plan">Purina Pro Plan</option>
+          <option value="Hill's Science Diet">Hill's Science Diet</option>
+          <option value="Blue Buffalo">Blue Buffalo</option>
+          <option value="Tiki Cat">Tiki Cat</option>
+          <option value="Other">Other…</option>
+        </select>
+      </div>
+      <div class="fg"><label>Treat Brand</label>
+        <select id="f-treat">
+          <option value="Greenies">Greenies Dental</option>
+          <option value="Temptations">Temptations</option>
+          <option value="Churu">Churu Lickable</option>
+          <option value="Delectables">Delectables</option>
+          <option value="None">No treats today</option>
+          <option value="Other">Other…</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgrid" id="other-row" style="display:none">
+      <div class="fg"><label>Food Brand Name</label><input type="text" id="f-food-other" placeholder="e.g. Ziwi Peak"></div>
+      <div class="fg"><label>Treat Brand Name</label><input type="text" id="f-treat-other" placeholder="e.g. Squeeze Up"></div>
+    </div>
+
+    <div class="srow">
+      <span class="slbl">Energy</span>
+      <input type="range" id="f-energy" min="1" max="10" value="7">
+      <span class="sval" id="d-energy">7</span>
+    </div>
+    <div class="srow">
+      <span class="slbl">Play (min)</span>
+      <input type="range" id="f-play" min="0" max="90" value="30" step="5">
+      <span class="sval" id="d-play">30m</span>
+    </div>
+    <div class="srow">
+      <span class="slbl">Treats given</span>
+      <input type="range" id="f-treats" min="0" max="30" value="18">
+      <span class="sval" id="d-treats">18</span>
+    </div>
+
+    <div class="tog-section">
+      <div class="tog-label">Mood / Behavior</div>
+      <div class="tog-row" id="grp-mood">
+        <button class="tog sel-amber" data-val="Playful">😺 Playful</button>
+        <button class="tog" data-val="Calm">😌 Calm</button>
+        <button class="tog" data-val="Affectionate">😻 Affectionate</button>
+        <button class="tog" data-val="Lethargic">😴 Lethargic</button>
+        <button class="tog" data-val="Anxious">😿 Anxious</button>
+        <button class="tog" data-val="Hiding">🙈 Hiding</button>
+        <button class="tog" data-val="Aggressive">😾 Aggressive</button>
+      </div>
+    </div>
+    <div class="tog-section">
+      <div class="tog-label">Appetite</div>
+      <div class="tog-row" id="grp-app">
+        <button class="tog sel-teal" data-val="Normal">✅ Normal</button>
+        <button class="tog" data-val="Less">⬇️ Ate less</button>
+        <button class="tog" data-val="More">⬆️ Ate more</button>
+        <button class="tog" data-val="Refused">❌ Refused</button>
+      </div>
+    </div>
+    <div class="tog-section">
+      <div class="tog-label">Litter Box (Fumoi)</div>
+      <div class="tog-row" id="grp-lit">
+        <button class="tog sel-teal" data-val="Normal">✅ Normal AM</button>
+        <button class="tog" data-val="Multiple">🔄 Multiple</button>
+        <button class="tog" data-val="Skipped">⛔ Skipped</button>
+        <button class="tog" data-val="Loose stool">⚠️ Loose stool</button>
+        <button class="tog" data-val="Straining">🚨 Straining</button>
+      </div>
+    </div>
+    <div class="tog-section">
+      <div class="tog-label">Hydration</div>
+      <div class="tog-row" id="grp-hydra">
+        <button class="tog sel-teal" data-val="Normal">✅ Normal</button>
+        <button class="tog" data-val="Less">⬇️ Less</button>
+        <button class="tog" data-val="More">⬆️ More</button>
+        <button class="tog" data-val="Unobserved">👀 Didn't observe</button>
+      </div>
+    </div>
+    <div class="tog-section">
+      <div class="tog-label">Health Flags (tap all that apply)</div>
+      <div class="tog-row" id="grp-flags">
+        <button class="tog sel-green" data-val="Clear">✅ All clear</button>
+        <button class="tog" data-val="Vomiting">🤢 Vomiting</button>
+        <button class="tog" data-val="Hairball">🧶 Hairball</button>
+        <button class="tog" data-val="Sneezing">🤧 Sneezing</button>
+        <button class="tog" data-val="Limping">🦴 Limping</button>
+        <button class="tog" data-val="Eye discharge">👁️ Eye discharge</button>
+        <button class="tog" data-val="Excess shedding">🐾 Excess shedding</button>
+      </div>
+    </div>
+
+    <div class="fgrid">
+      <div class="fg"><label>Coat condition</label>
+        <select id="f-coat">
+          <option>Shiny &amp; clean</option>
+          <option>Normal</option>
+          <option>Some shedding</option>
+          <option>Dull or patchy</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Notes (optional)</label>
+      <textarea id="f-notes" placeholder="Anything unusual — extra cuddly, new behavior, ignored scratcher..."></textarea>
+    </div>
+    <button class="btn btn-am btn-full" id="save-btn">＋ Save Today's Entry</button>
+  </div>
+
+  <div class="card" id="log-card" style="display:none">
+    <div class="ctitle" style="justify-content:space-between;display:flex;align-items:center">
+      <span>📅 Log — <span id="log-count">0</span> entries</span>
+      <button class="btn-sm" id="go-charts-btn">Charts →</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Date</th><th>Food</th><th>Energy</th><th>Mood</th><th>Litter</th><th>Flags</th><th>Weight</th><th></th></tr></thead>
+        <tbody id="log-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHARTS ══ -->
+<div class="page" id="page-charts">
+  <div id="charts-empty" class="empty"><div class="eico">📊</div><p>Log at least <strong>2 days</strong> to unlock Wayne's charts.</p></div>
+  <div id="charts-content" style="display:none">
+    <div class="cgrid">
+      <div class="cbox wide"><div class="ctit">⚡ Energy Level Over Time</div><div class="cwrap tall"><canvas id="ch-en"></canvas></div></div>
+      <div class="cbox"><div class="ctit">⚖️ Weight Trend</div><div class="cwrap"><canvas id="ch-wt"></canvas></div></div>
+      <div class="cbox"><div class="ctit">😺 Mood Distribution</div><div class="cwrap"><canvas id="ch-mood"></canvas></div></div>
+      <div class="cbox"><div class="ctit">🏃 Play Minutes / Day</div><div class="cwrap"><canvas id="ch-play"></canvas></div></div>
+      <div class="cbox"><div class="ctit">🚽 Litter Box Breakdown</div><div class="cwrap"><canvas id="ch-lit"></canvas></div></div>
+      <div class="cbox"><div class="ctit">⚡ Energy by Food Brand</div><div class="cwrap"><canvas id="ch-ben"></canvas></div></div>
+      <div class="cbox wide"><div class="ctit">📈 Rolling Health Score</div><div class="cwrap"><canvas id="ch-score"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BRANDS ══ -->
+<div class="page" id="page-brands">
+  <div class="chips" id="brand-chips"></div>
+  <div class="bgrid" id="brand-cards"></div>
+  <div class="card">
+    <div class="ctitle">📋 Brand Comparison Table</div>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead><tr><th>Brand</th><th>Type</th><th>Days</th><th>Avg Energy</th><th>Stability</th><th>Mood Score</th><th>GI Issues</th><th>Flag Days</th><th>Rating</th></tr></thead>
+        <tbody id="brand-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="cgrid" style="margin-top:12px">
+    <div class="cbox"><div class="ctit">⚡ Energy by Food Brand</div><div class="cwrap"><canvas id="ch-ben2"></canvas></div></div>
+    <div class="cbox"><div class="ctit">😺 Mood Score by Food Brand</div><div class="cwrap"><canvas id="ch-bmood"></canvas></div></div>
+    <div class="cbox"><div class="ctit">🦷 Energy by Treat Brand</div><div class="cwrap"><canvas id="ch-ten"></canvas></div></div>
+    <div class="cbox"><div class="ctit">📊 Stability (lower σ = better)</div><div class="cwrap"><canvas id="ch-bstab"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ══ ANALYSIS ══ -->
+<div class="page" id="page-analysis">
+  <div id="an-empty" class="empty"><div class="eico">🔬</div><p>Log some entries first — then come back for Wayne's full report.</p></div>
+  <div id="an-content" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-family:'Cinzel',serif;font-size:20px">Wayne's Health Report</div>
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu)" id="an-ts"></span>
+    </div>
+    <div class="chips" id="an-chips"></div>
+    <div class="agrid">
+      <div class="acard a1"><div class="albl">📋 Executive Summary</div><div class="abody" id="an-exec"></div></div>
+      <div class="acard a2"><div class="albl">📈 Key Trends</div><div class="abody" id="an-trends"></div></div>
+      <div class="acard a3"><div class="albl">⚠️ Risk Signals</div><div class="abody" id="an-risk"></div></div>
+      <div class="acard a4"><div class="albl">🧠 Behavioral Insights</div><div class="abody" id="an-behav"></div></div>
+      <div class="acard a5"><div class="albl">🔮 7-Day Predictions</div><div class="abody" id="an-pred"></div></div>
+      <div class="acard a6 awide"><div class="albl">💡 Recommendations</div><div class="abody" id="an-recs"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ── STORAGE KEY ────────────────────────────────────────
+var STORAGE_KEY = 'waynesworld_v1';
+
+// ── STATE ──────────────────────────────────────────────
+var log = [];
+var picks = { mood:'Playful', app:'Normal', lit:'Normal', hydra:'Normal', flags:['Clear'] };
+var charts = {};
+
+// ── LOCALSTORAGE ───────────────────────────────────────
+function saveToStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+    document.getElementById('storage-status').textContent = 'Active ✓';
+    document.getElementById('storage-status').style.color = 'var(--gn)';
+    document.getElementById('storage-count').textContent = log.length + ' entr' + (log.length === 1 ? 'y' : 'ies') + ' saved in browser';
+    var ind = document.getElementById('save-indicator');
+    ind.classList.add('show');
+    setTimeout(function(){ ind.classList.remove('show'); }, 2000);
+  } catch(e) {
+    document.getElementById('storage-status').textContent = 'Unavailable';
+    document.getElementById('storage-status').style.color = 'var(--ro)';
+  }
+}
+
+function loadFromStorage() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      log = JSON.parse(raw);
+      document.getElementById('storage-status').textContent = 'Active ✓';
+      document.getElementById('storage-status').style.color = 'var(--gn)';
+      document.getElementById('storage-count').textContent = log.length + ' entr' + (log.length === 1 ? 'y' : 'ies') + ' saved in browser';
+    } else {
+      document.getElementById('storage-status').textContent = 'Active — no data yet';
+      document.getElementById('storage-status').style.color = 'var(--am)';
+      document.getElementById('storage-count').textContent = 'Start logging to save Wayne\'s data';
+    }
+  } catch(e) {
+    document.getElementById('storage-status').textContent = 'Unavailable in this browser';
+    document.getElementById('storage-status').style.color = 'var(--ro)';
+  }
+}
+
+// ── INIT ───────────────────────────────────────────────
+loadFromStorage();
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+if (log.length > 0) {
+  renderLog();
+  updateStats();
+  document.getElementById('log-card').style.display = 'block';
+}
+
+// Clear data button
+document.getElementById('clear-data-btn').addEventListener('click', function(){
+  if (confirm('Delete ALL of Wayne\'s logged data? This cannot be undone.')) {
+    log = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    renderLog();
+    updateStats();
+    document.getElementById('log-card').style.display = 'none';
+    document.getElementById('storage-count').textContent = 'All data cleared';
+    document.getElementById('storage-status').textContent = 'Active — no data yet';
+    document.getElementById('storage-status').style.color = 'var(--am)';
+  }
+});
+
+// ── NAV ────────────────────────────────────────────────
+['log','charts','brands','analysis','care','training','medical','sos','supplies','milestones','budget'].forEach(function(id){
+  document.getElementById('tab-'+id).addEventListener('click', function(){
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.nt').forEach(function(t){ t.classList.remove('active'); });
+    document.getElementById('page-'+id).classList.add('active');
+    this.classList.add('active');
+    if (id === 'charts')    buildCharts();
+    if (id === 'brands')    buildBrands();
+    if (id === 'analysis')  buildAnalysis();
+    if (id === 'care')      buildCare();
+    if (id === 'training')  buildTraining();
+    if (id === 'medical')   buildMedical();
+    if (id === 'sos')       buildSOS();
+    if (id === 'supplies')  buildSupplies();
+    if (id === 'milestones') buildMilestones();
+    if (id === 'budget')    buildBudget();
+  });
+});
+
+document.getElementById('go-charts-btn').addEventListener('click', function(){
+  document.getElementById('tab-charts').click();
+});
+
+// ── TOGGLES ────────────────────────────────────────────
+function setupSingle(grpId, stateKey, colorClass) {
+  document.getElementById(grpId).querySelectorAll('.tog').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      document.getElementById(grpId).querySelectorAll('.tog').forEach(function(b){ b.className='tog'; });
+      this.classList.add('tog');
+      this.classList.add(colorClass);
+      picks[stateKey] = this.getAttribute('data-val');
+    });
+  });
+}
+
+document.getElementById('grp-mood').querySelectorAll('.tog').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    document.getElementById('grp-mood').querySelectorAll('.tog').forEach(function(b){ b.className='tog'; });
+    var val = this.getAttribute('data-val');
+    var neg = ['Lethargic','Anxious','Hiding','Aggressive'];
+    this.classList.add(neg.indexOf(val) > -1 ? 'sel-red' : 'sel-amber');
+    picks.mood = val;
+  });
+});
+
+setupSingle('grp-app',   'app',   'sel-teal');
+setupSingle('grp-lit',   'lit',   'sel-teal');
+setupSingle('grp-hydra', 'hydra', 'sel-teal');
+
+document.getElementById('grp-flags').querySelectorAll('.tog').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    var val = this.getAttribute('data-val');
+    if (val === 'Clear') {
+      picks.flags = ['Clear'];
+      document.getElementById('grp-flags').querySelectorAll('.tog').forEach(function(b){ b.className='tog'; });
+      this.classList.add('sel-green');
+    } else {
+      document.querySelector('#grp-flags [data-val="Clear"]').className = 'tog';
+      var idx = picks.flags.indexOf(val);
+      if (idx > -1) { picks.flags.splice(idx,1); this.className='tog'; }
+      else           { picks.flags.push(val);     this.classList.add('sel-red'); }
+      if (picks.flags.length === 0) {
+        picks.flags = ['Clear'];
+        document.querySelector('#grp-flags [data-val="Clear"]').classList.add('sel-green');
+      }
+    }
+  });
+});
+
+document.getElementById('f-food').addEventListener('change', function(){
+  document.getElementById('other-row').style.display =
+    (this.value==='Other' || document.getElementById('f-treat').value==='Other') ? 'grid' : 'none';
+});
+document.getElementById('f-treat').addEventListener('change', function(){
+  document.getElementById('other-row').style.display =
+    (this.value==='Other' || document.getElementById('f-food').value==='Other') ? 'grid' : 'none';
+});
+
+document.getElementById('f-energy').addEventListener('input', function(){ document.getElementById('d-energy').textContent = this.value; });
+document.getElementById('f-play').addEventListener('input',   function(){ document.getElementById('d-play').textContent   = this.value+'m'; });
+document.getElementById('f-treats').addEventListener('input', function(){ document.getElementById('d-treats').textContent  = this.value; });
+
+// ── SAVE ENTRY ─────────────────────────────────────────
+document.getElementById('save-btn').addEventListener('click', function(){
+  var date = document.getElementById('f-date').value;
+  if (!date) { alert('Please pick a date.'); return; }
+  if (log.find(function(e){ return e.date===date; })) {
+    if (!confirm('Entry for '+date+' exists. Replace it?')) return;
+    log = log.filter(function(e){ return e.date!==date; });
+  }
+  var fv = document.getElementById('f-food').value;
+  var tv = document.getElementById('f-treat').value;
+  log.push({
+    date:   date,
+    food:   fv==='Other' ? (document.getElementById('f-food-other').value  || 'Other') : fv,
+    treat:  tv==='Other' ? (document.getElementById('f-treat-other').value || 'Other') : tv,
+    energy: +document.getElementById('f-energy').value,
+    play:   +document.getElementById('f-play').value,
+    treats: +document.getElementById('f-treats').value,
+    mood:   picks.mood,
+    app:    picks.app,
+    lit:    picks.lit,
+    hydra:  picks.hydra,
+    flags:  [].concat(picks.flags),
+    coat:   document.getElementById('f-coat').value,
+    weight: parseFloat(document.getElementById('f-weight').value) || null,
+    notes:  document.getElementById('f-notes').value.trim()
+  });
+  log.sort(function(a,b){ return a.date.localeCompare(b.date); });
+  saveToStorage();
+  renderLog();
+  updateStats();
+  resetForm();
+  document.getElementById('log-card').style.display = 'block';
+  document.getElementById('log-card').scrollIntoView({ behavior:'smooth', block:'nearest' });
+});
+
+function resetForm() {
+  var d = new Date(document.getElementById('f-date').value + 'T12:00:00');
+  d.setDate(d.getDate() + 1);
+  document.getElementById('f-date').value   = d.toISOString().split('T')[0];
+  document.getElementById('f-energy').value = 7;  document.getElementById('d-energy').textContent = '7';
+  document.getElementById('f-play').value   = 30; document.getElementById('d-play').textContent   = '30m';
+  document.getElementById('f-treats').value = 18; document.getElementById('d-treats').textContent  = '18';
+  document.getElementById('f-weight').value = '';
+  document.getElementById('f-notes').value  = '';
+  document.getElementById('grp-mood').querySelectorAll('.tog').forEach(function(b,i){ b.className='tog'+(i===0?' sel-amber':''); });
+  document.getElementById('grp-app').querySelectorAll('.tog').forEach(function(b,i){  b.className='tog'+(i===0?' sel-teal':''); });
+  document.getElementById('grp-lit').querySelectorAll('.tog').forEach(function(b,i){  b.className='tog'+(i===0?' sel-teal':''); });
+  document.getElementById('grp-hydra').querySelectorAll('.tog').forEach(function(b,i){ b.className='tog'+(i===0?' sel-teal':''); });
+  document.getElementById('grp-flags').querySelectorAll('.tog').forEach(function(b,i){ b.className='tog'+(i===0?' sel-green':''); });
+  picks = { mood:'Playful', app:'Normal', lit:'Normal', hydra:'Normal', flags:['Clear'] };
+}
+
+// ── RENDER LOG TABLE ───────────────────────────────────
+function renderLog() {
+  document.getElementById('log-count').textContent = log.length;
+  var html = log.map(function(e,i){
+    var ec = e.energy>=8 ? 'var(--gn)' : e.energy>=5 ? 'var(--am)' : 'var(--ro)';
+    var mb = ['Playful','Calm','Affectionate'].indexOf(e.mood)>-1 ? 'bg' : 'br';
+    var lb = e.lit==='Normal' ? 'bt' : ['Loose stool','Straining','Skipped'].indexOf(e.lit)>-1 ? 'br' : 'by';
+    var fb = e.flags.indexOf('Clear')>-1
+      ? '<span class="badge bg">Clear</span>'
+      : e.flags.map(function(f){ return '<span class="badge br">'+f+'</span>'; }).join(' ');
+    return '<tr>'
+      +'<td style="color:var(--tx);font-weight:600;white-space:nowrap">'+fd(e.date)+'</td>'
+      +'<td><span class="badge bbl">'+e.food+'</span></td>'
+      +'<td><div class="enbar"><div class="entrack"><div class="enfill" style="width:'+e.energy*10+'%;background:'+ec+'"></div></div>'
+      +'<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:'+ec+';min-width:14px">'+e.energy+'</span></div></td>'
+      +'<td><span class="badge '+mb+'">'+e.mood+'</span></td>'
+      +'<td><span class="badge '+lb+'">'+e.lit+'</span></td>'
+      +'<td>'+fb+'</td>'
+      +'<td style="font-family:\'DM Mono\',monospace;font-size:10px">'+(e.weight?e.weight+' lbs':'—')+'</td>'
+      +'<td><button class="delbtn" data-i="'+i+'">✕</button></td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('log-body').innerHTML = html;
+  document.getElementById('log-body').querySelectorAll('.delbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i = +this.getAttribute('data-i');
+      if (confirm('Remove this entry?')) {
+        log.splice(i, 1);
+        saveToStorage();
+        renderLog();
+        updateStats();
+      }
+    });
+  });
+}
+
+function fd(ds) {
+  return new Date(ds+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+
+function updateStats() {
+  var n = log.length;
+  document.getElementById('s-days').textContent = n;
+  if (!n) { document.getElementById('s-en').textContent='—'; document.getElementById('s-score').textContent='—'; return; }
+  document.getElementById('s-en').textContent    = (log.reduce(function(s,e){ return s+e.energy; },0)/n).toFixed(1);
+  document.getElementById('s-score').textContent = calcScore().toFixed(1);
+}
+
+function calcScore() {
+  var n = log.length; if (!n) return 0;
+  var s = 10;
+  s -= (log.filter(function(e){ return e.energy<=4; }).length/n)*2.5;
+  s -= (log.filter(function(e){ return e.flags.indexOf('Clear')<0; }).length/n)*2;
+  s -= (log.filter(function(e){ return ['Skipped','Loose stool','Straining'].indexOf(e.lit)>-1; }).length/n)*2.5;
+  s -= (log.filter(function(e){ return ['Less','Refused'].indexOf(e.app)>-1; }).length/n)*1.5;
+  s -= (log.filter(function(e){ return e.play<10; }).length/n)*1;
+  return Math.max(1, Math.min(10, Math.round(s*10)/10));
+}
+
+function moodScore(m) {
+  return {Playful:10,Affectionate:9,Calm:7,Normal:7,Anxious:4,Lethargic:3,Hiding:2,Aggressive:2}[m]||5;
+}
+
+// ── CHART HELPERS ──────────────────────────────────────
+var BCOLS = ['#f5a623','#2dd4bf','#a78bfa','#4ade80','#fb7185','#60a5fa','#fb923c'];
+var BASE = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1c2030',borderColor:'#252a3a',borderWidth:1,titleColor:'#e8ecf5',bodyColor:'#9aa3c0',padding:9} },
+  scales:{
+    x:{ ticks:{color:'#5a6180',font:{size:9,family:'DM Mono'}}, grid:{color:'rgba(37,42,58,.5)'} },
+    y:{ ticks:{color:'#5a6180',font:{size:9,family:'DM Mono'}}, grid:{color:'rgba(37,42,58,.5)'} }
+  }
+};
+
+function mk(id, type, data, extra) {
+  if (charts[id]) charts[id].destroy();
+  var el = document.getElementById(id); if (!el) return;
+  charts[id] = new Chart(el, { type:type, data:data, options:Object.assign({},BASE,extra||{}) });
+}
+
+// ── BUILD CHARTS ───────────────────────────────────────
+function buildCharts() {
+  var n = log.length;
+  document.getElementById('charts-empty').style.display   = n<2 ? 'block' : 'none';
+  document.getElementById('charts-content').style.display = n>=2 ? 'block' : 'none';
+  if (n < 2) return;
+
+  var labels   = log.map(function(e){ return fd(e.date); });
+  var enData   = log.map(function(e){ return e.energy; });
+  var playData = log.map(function(e){ return e.play; });
+  var avg      = +(enData.reduce(function(a,b){return a+b;},0)/n).toFixed(1);
+
+  mk('ch-en','line',{labels:labels,datasets:[
+    {label:'Energy',data:enData,borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.08)',fill:true,tension:.4,
+     pointBackgroundColor:enData.map(function(v){return v>=8?'#4ade80':v>=5?'#f5a623':'#fb7185';}),pointRadius:5,borderWidth:2},
+    {label:'Avg',data:Array(n).fill(avg),borderColor:'rgba(45,212,191,.35)',borderDash:[4,4],pointRadius:0,borderWidth:1}
+  ]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:10})}});
+
+  var wlog = log.filter(function(e){return e.weight;});
+  if (wlog.length > 0) {
+    mk('ch-wt','line',{labels:wlog.map(function(e){return fd(e.date);}),datasets:[
+      {label:'Weight',data:wlog.map(function(e){return e.weight;}),borderColor:'#a78bfa',
+       backgroundColor:'rgba(167,139,250,.08)',fill:true,tension:.4,pointRadius:4,borderWidth:2}
+    ]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{
+      min:Math.min.apply(null,wlog.map(function(e){return e.weight;}))-0.3,
+      max:Math.max.apply(null,wlog.map(function(e){return e.weight;}))+0.3
+    })}});
+  }
+
+  var mc={};
+  log.forEach(function(e){ mc[e.mood]=(mc[e.mood]||0)+1; });
+  var mcolMap={Playful:'#4ade80',Calm:'#2dd4bf',Affectionate:'#f5a623',Lethargic:'#fb7185',Anxious:'#fb923c',Hiding:'#f472b6',Aggressive:'#ef4444'};
+  mk('ch-mood','doughnut',{labels:Object.keys(mc),datasets:[{data:Object.values(mc),
+    backgroundColor:Object.keys(mc).map(function(m){return mcolMap[m]||'#5a6180';}),borderWidth:0}]},
+    {plugins:{legend:{display:true,position:'right',labels:{color:'#9aa3c0',font:{size:9,family:'DM Mono'},boxWidth:8,padding:6}}},scales:{}});
+
+  mk('ch-play','bar',{labels:labels,datasets:[{label:'Play min',data:playData,
+    backgroundColor:playData.map(function(v){return v>=30?'rgba(74,222,128,.7)':v>=15?'rgba(245,166,35,.7)':'rgba(251,113,133,.7)';}),
+    borderRadius:5,borderSkipped:false}]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:90})}});
+
+  var lc={};
+  log.forEach(function(e){ lc[e.lit]=(lc[e.lit]||0)+1; });
+  mk('ch-lit','doughnut',{labels:Object.keys(lc),datasets:[{data:Object.values(lc),
+    backgroundColor:['#2dd4bf','#f5a623','#fb7185','#ef4444','#f97316'],borderWidth:0}]},
+    {plugins:{legend:{display:true,position:'right',labels:{color:'#9aa3c0',font:{size:9,family:'DM Mono'},boxWidth:8,padding:6}}},scales:{}});
+
+  var bm={};
+  log.forEach(function(e){ if(!bm[e.food]) bm[e.food]=[]; bm[e.food].push(e.energy); });
+  var bnames = Object.keys(bm);
+  var bavg   = bnames.map(function(b){ return +(bm[b].reduce(function(a,c){return a+c;},0)/bm[b].length).toFixed(1); });
+  mk('ch-ben','bar',{labels:bnames,datasets:[{label:'Avg Energy',data:bavg,
+    backgroundColor:bnames.map(function(_,i){return BCOLS[i%BCOLS.length]+'cc';}),borderRadius:6,borderSkipped:false}]},
+    {scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:10})}});
+
+  var scores = log.map(function(_,i){
+    var sl=log.slice(0,i+1),sn=sl.length,sc=10;
+    sc-=(sl.filter(function(x){return x.energy<=4;}).length/sn)*2.5;
+    sc-=(sl.filter(function(x){return x.flags.indexOf('Clear')<0;}).length/sn)*2;
+    sc-=(sl.filter(function(x){return ['Skipped','Loose stool','Straining'].indexOf(x.lit)>-1;}).length/sn)*2.5;
+    sc-=(sl.filter(function(x){return ['Less','Refused'].indexOf(x.app)>-1;}).length/sn)*1.5;
+    return Math.max(1,Math.min(10,Math.round(sc*10)/10));
+  });
+  mk('ch-score','line',{labels:labels,datasets:[{label:'Score',data:scores,borderColor:'#4ade80',
+    backgroundColor:'rgba(74,222,128,.07)',fill:true,tension:.4,pointRadius:4,borderWidth:2,
+    pointBackgroundColor:scores.map(function(s){return s>=8?'#4ade80':s>=6?'#f5a623':'#fb7185';})}]},
+    {scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:10})}});
+}
+
+// ── BUILD BRANDS ───────────────────────────────────────
+function buildBrands() {
+  var seedFood  = { 'Orijen':   {energies:[8],moods:[8],litBad:0,flags:0,days:1,seeded:true} };
+  var seedTreat = { 'Greenies': {energies:[8],days:1,seeded:true} };
+  var foodData  = JSON.parse(JSON.stringify(seedFood));
+  var treatData = JSON.parse(JSON.stringify(seedTreat));
+
+  log.forEach(function(e){
+    if (!foodData[e.food]) foodData[e.food]={energies:[],moods:[],litBad:0,flags:0,days:0,seeded:false};
+    if (foodData[e.food].seeded){ foodData[e.food].energies=[];foodData[e.food].moods=[];foodData[e.food].days=0;foodData[e.food].seeded=false; }
+    foodData[e.food].energies.push(e.energy);
+    foodData[e.food].moods.push(moodScore(e.mood));
+    if (['Skipped','Loose stool','Straining'].indexOf(e.lit)>-1) foodData[e.food].litBad++;
+    if (e.flags.indexOf('Clear')<0) foodData[e.food].flags++;
+    foodData[e.food].days++;
+    if (e.treat && e.treat!=='None') {
+      if (!treatData[e.treat]) treatData[e.treat]={energies:[],days:0,seeded:false};
+      if (treatData[e.treat].seeded){ treatData[e.treat].energies=[];treatData[e.treat].days=0;treatData[e.treat].seeded=false; }
+      treatData[e.treat].energies.push(e.energy);
+      treatData[e.treat].days++;
+    }
+  });
+
+  function avg(arr){ return arr.length ? (arr.reduce(function(a,b){return a+b;},0)/arr.length).toFixed(1) : '—'; }
+  function std(arr){
+    if (arr.length<2) return 0;
+    var m=+avg(arr);
+    return Math.sqrt(arr.map(function(x){return (x-m)*(x-m);}).reduce(function(a,b){return a+b;})/arr.length);
+  }
+  function rating(b){
+    var s=foodData[b],en=+avg(s.energies),lr=s.days?s.litBad/s.days*100:0,fr=s.days?s.flags/s.days*100:0;
+    return (en>=8&&lr<20&&fr<20)?'Recommended':(lr>40||fr>40)?'Avoid':'Neutral';
+  }
+
+  var foods  = Object.keys(foodData);
+  var treats = Object.keys(treatData);
+  var topEn    = foods.length ? foods.reduce(function(a,b){return +avg(foodData[a].energies)>+avg(foodData[b].energies)?a:b;}) : null;
+  var topStab  = foods.length ? foods.reduce(function(a,b){return std(foodData[a].energies)<=std(foodData[b].energies)?a:b;}) : null;
+  var riskB    = foods.find(function(b){ var s=foodData[b]; return s.days>0&&(s.flags/s.days>0.5||s.litBad/s.days>0.5); })||null;
+
+  var chips='';
+  if (topEn)   chips+='<div class="chip"><div class="cdot dy"></div>⚡ Top Energy: <strong style="color:var(--am);margin-left:4px">'+topEn+'</strong></div>';
+  if (topStab) chips+='<div class="chip"><div class="cdot dt"></div>🎯 Most Stable: <strong style="color:var(--tl);margin-left:4px">'+topStab+'</strong></div>';
+  if (riskB)   chips+='<div class="chip"><div class="cdot dr"></div>⚠️ Risk Brand: <strong style="color:var(--ro);margin-left:4px">'+riskB+'</strong></div>';
+  document.getElementById('brand-chips').innerHTML = chips;
+
+  var brandNotes = {
+    'Orijen':'Premium high-protein, biologically appropriate. No fillers or by-products. Supports lean muscle, coat health, and urinary tract. Wayne\'s established primary food at ~250 kcal/day.',
+    'Greenies':'Vet-recommended dental treat. Clinically shown to reduce tartar by up to 60%. ~1.4 kcal/treat. Wayne\'s 18/day = 25 kcal, fitting perfectly within his 280 kcal daily budget.',
+    'Fancy Feast':'Widely available, high palatability wet food. Higher sodium than premium brands. Good for occasional use or appetite stimulation. Lower protein density than Orijen.',
+    'Royal Canin':'Breed/condition-specific formulas. Highly digestible, vet-recommended for sensitive stomachs. Contains more carbohydrates than grain-free options.',
+    'Wellness':'Grain-free premium option. Good protein levels with natural ingredients. Solid second-choice if Orijen is unavailable.',
+    'Purina Pro Plan':'Vet-endorsed, science-backed formulas. Contains some grains. High palatability — good for picky cats. Widely studied with strong safety record.',
+    "Hill's Science Diet":'Clinically tested formulas. Good for weight management. Contains grains. Often recommended post-vet visit for specific conditions.',
+    'Blue Buffalo':'Natural ingredients with LifeSource Bits. Grain-free options available. Verify current batch safety before use.',
+    'Tiki Cat':'High-moisture, fish-based wet food. Excellent for hydration. High protein, low carb. Great for urinary health support.',
+    'Temptations':'High palatability treat. ~2 kcal/treat — higher than Greenies. Great for training. Use sparingly to stay within calorie budget.',
+    'Churu':'Lickable puree treat. Excellent for hydration boost. Low calorie (~1 kcal/tube). Great for medication hiding or bonding.',
+    'Delectables':'Lickable stew-style treat. Moderate calorie. Good for hydration. Good variety for enrichment rotation.'
+  };
+
+  var cardsHtml = foods.map(function(b,i){
+    var s=foodData[b], en=+avg(s.energies), r=rating(b);
+    var rc=r==='Recommended'?'b-rec':r==='Avoid'?'b-avo':'b-neu';
+    var bc=r==='Recommended'?'bg':r==='Avoid'?'br':'by';
+    var col=BCOLS[i%BCOLS.length];
+    var note=brandNotes[b]||'Log more days with this brand to build comparison data.';
+    var sl=s.seeded?'<span class="badge by" style="font-size:8px;margin-left:4px">pre-loaded</span>':'';
+    return '<div class="bcard '+rc+'">'
+      +'<div class="bname">'+b+sl+'</div>'
+      +'<div class="btype">Food · '+(s.seeded?'Wayne\'s primary':s.days+' day'+(s.days!==1?'s':'')+' logged')+'</div>'
+      +'<div class="bstat">Avg Energy <strong>'+avg(s.energies)+'/10</strong></div>'
+      +'<div class="mbar"><div class="mfill" style="width:'+en*10+'%;background:'+col+'"></div></div>'
+      +'<div class="bstat">Mood Score <strong>'+avg(s.moods)+'/10</strong></div>'
+      +'<div class="bstat">GI Issues <strong>'+(s.days?Math.round(s.litBad/s.days*100):0)+'%</strong></div>'
+      +'<div class="bstat">Flag Days <strong>'+(s.days?Math.round(s.flags/s.days*100):0)+'%</strong></div>'
+      +'<div class="bstat">Stability σ <strong>'+std(s.energies).toFixed(2)+'</strong></div>'
+      +'<div style="margin-top:8px;font-size:10px;color:var(--t2);line-height:1.5">'+note+'</div>'
+      +'<div style="margin-top:8px"><span class="badge '+bc+'">'+r+'</span></div>'
+      +'</div>';
+  }).join('');
+
+  var treatHtml = treats.map(function(t,i){
+    var s=treatData[t], en=+avg(s.energies);
+    var note=brandNotes[t]||'Log more treat days to build comparison data.';
+    var sl=s.seeded?'<span class="badge by" style="font-size:8px;margin-left:4px">pre-loaded</span>':'';
+    return '<div class="bcard b-rec">'
+      +'<div class="bname">'+t+sl+'</div>'
+      +'<div class="btype">Treat · '+(s.seeded?'Wayne\'s daily treat':s.days+' day'+(s.days!==1?'s':'')+' logged')+'</div>'
+      +'<div class="bstat">Avg energy on treat day <strong>'+avg(s.energies)+'/10</strong></div>'
+      +'<div class="mbar"><div class="mfill" style="width:'+en*10+'%;background:'+BCOLS[(i+3)%BCOLS.length]+'"></div></div>'
+      +'<div style="margin-top:8px;font-size:10px;color:var(--t2);line-height:1.5">'+note+'</div>'
+      +'<div style="margin-top:8px"><span class="badge bg">Recommended</span></div>'
+      +'</div>';
+  }).join('');
+
+  document.getElementById('brand-cards').innerHTML = cardsHtml + treatHtml;
+
+  var tbodyHtml = foods.map(function(b){
+    var s=foodData[b],en=avg(s.energies),stdev=std(s.energies);
+    var stab=stdev<=1?'High':stdev<=2?'Medium':'Low';
+    var sc=stab==='High'?'bg':stab==='Low'?'br':'by';
+    var r=rating(b), rc=r==='Recommended'?'bg':r==='Avoid'?'br':'by';
+    return '<tr>'
+      +'<td><strong style="color:var(--tx)">'+b+(s.seeded?' <span style="font-size:9px;color:var(--mu)">(pre-loaded)</span>':'')+'</strong></td>'
+      +'<td><span class="badge bbl">food</span></td>'
+      +'<td style="font-family:\'DM Mono\',monospace">'+(s.seeded?'—':s.days)+'</td>'
+      +'<td><strong style="color:var(--am)">'+en+'/10</strong></td>'
+      +'<td><span class="badge '+sc+'">'+stab+'</span></td>'
+      +'<td><strong style="color:var(--vi)">'+avg(s.moods)+'/10</strong></td>'
+      +'<td>'+(s.seeded?'—':Math.round(s.litBad/s.days*100)+'%')+'</td>'
+      +'<td>'+(s.seeded?'—':Math.round(s.flags/s.days*100)+'%')+'</td>'
+      +'<td><span class="badge '+rc+'">'+r+'</span></td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('brand-tbody').innerHTML = tbodyHtml;
+
+  if (foods.length > 0) {
+    var fc=foods.map(function(_,i){return BCOLS[i%BCOLS.length]+'cc';});
+    mk('ch-ben2','bar',{labels:foods,datasets:[{label:'Avg Energy',data:foods.map(function(b){return +avg(foodData[b].energies);}),backgroundColor:fc,borderRadius:6,borderSkipped:false}]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:10})}});
+    mk('ch-bmood','bar',{labels:foods,datasets:[{label:'Mood Score',data:foods.map(function(b){return +avg(foodData[b].moods);}),backgroundColor:foods.map(function(_,i){return BCOLS[(i+2)%BCOLS.length]+'cc';}),borderRadius:6,borderSkipped:false}]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:10})}});
+    var stds=foods.map(function(b){return +std(foodData[b].energies).toFixed(2);});
+    mk('ch-bstab','bar',{labels:foods,datasets:[{label:'σ',data:stds,backgroundColor:stds.map(function(v){return v<=1?'rgba(74,222,128,.7)':v<=2?'rgba(245,166,35,.7)':'rgba(251,113,133,.7)';}),borderRadius:6,borderSkipped:false}]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0})}});
+  }
+  if (treats.length > 0) {
+    mk('ch-ten','bar',{labels:treats,datasets:[{label:'Avg Energy',data:treats.map(function(t){return +avg(treatData[t].energies);}),backgroundColor:treats.map(function(_,i){return BCOLS[(i+3)%BCOLS.length]+'cc';}),borderRadius:6,borderSkipped:false}]},{scales:{x:BASE.scales.x,y:Object.assign({},BASE.scales.y,{min:0,max:10})}});
+  }
+}
+
+// ── BUILD ANALYSIS ─────────────────────────────────────
+function buildAnalysis() {
+  var n = log.length;
+  document.getElementById('an-empty').style.display   = n===0 ? 'block' : 'none';
+  document.getElementById('an-content').style.display = n>0   ? 'block' : 'none';
+  if (!n) return;
+
+  var avgEn    = +(log.reduce(function(s,e){return s+e.energy;},0)/n).toFixed(1);
+  var score    = calcScore();
+  var status   = score>=8.5?'Excellent':score>=7?'Good':score>=5?'Fair':'Concerning';
+  var flagDays = log.filter(function(e){return e.flags.indexOf('Clear')<0;}).length;
+  var litBad   = log.filter(function(e){return ['Skipped','Loose stool','Straining'].indexOf(e.lit)>-1;}).length;
+  var lowEn    = log.filter(function(e){return e.energy<=4;}).length;
+  var skipPlay = log.filter(function(e){return e.play<10;}).length;
+  var wts      = log.filter(function(e){return e.weight;}).map(function(e){return e.weight;});
+  var avgW     = wts.length ? (wts.reduce(function(a,b){return a+b;},0)/wts.length).toFixed(1) : null;
+  var wtDiff   = wts.length>=2 ? +(wts[wts.length-1]-wts[0]).toFixed(2) : null;
+  var mc={};
+  log.forEach(function(e){ mc[e.mood]=(mc[e.mood]||0)+1; });
+  var topMood = Object.entries(mc).sort(function(a,b){return b[1]-a[1];})[0];
+  var fd2={};
+  log.forEach(function(e){ fd2[e.food]=(fd2[e.food]||0)+1; });
+  var primaryFood = Object.entries(fd2).sort(function(a,b){return b[1]-a[1];})[0][0];
+
+  var sc2 = score>=8.5?'dg':score>=7?'dy':'dr';
+  document.getElementById('an-chips').innerHTML = [
+    {l:'Status: '+status,c:sc2},{l:'Score: '+score+'/10',c:sc2},
+    {l:'Avg Energy: '+avgEn+'/10',c:avgEn>=7?'dg':'dy'},
+    {l:'Primary Food: '+primaryFood,c:'dt'},
+    {l:'Flag Days: '+flagDays+'/'+n,c:flagDays===0?'dg':flagDays<n/3?'dy':'dr'}
+  ].map(function(c){ return '<div class="chip"><div class="cdot '+c.c+'"></div><span>'+c.l+'</span></div>'; }).join('');
+
+  var risks=[];
+  if (flagDays>0) risks.push('Health flags on <strong>'+flagDays+' of '+n+' day(s)</strong>');
+  if (litBad>0)   risks.push('Litter box issues on <strong>'+litBad+' day(s)</strong> — monitor for GI problems');
+  if (lowEn>0)    risks.push('Low energy (≤4/10) on <strong>'+lowEn+' day(s)</strong>');
+  if (wtDiff!==null&&Math.abs(wtDiff)>0.3) risks.push('Weight '+(wtDiff>0?'gain ↑':'loss ↓')+' of <strong>'+Math.abs(wtDiff)+' lbs</strong>');
+  if (!risks.length) risks.push('✅ No critical risks detected — Wayne is thriving!');
+
+  document.getElementById('an-ts').textContent = 'Generated '+new Date().toLocaleString();
+  document.getElementById('an-exec').innerHTML = 'Wayne is in <strong>'+status+'</strong> health (score <strong>'+score+'/10</strong>) across <strong>'+n+' logged day(s)</strong>. Avg energy <strong>'+avgEn+'/10</strong>. Dominant mood: <strong>'+topMood[0]+'</strong> ('+topMood[1]+'/'+n+' days). Primary food: <strong>'+primaryFood+'</strong>.'+(avgW?' Avg weight: <strong>'+avgW+' lbs</strong>.':'');
+  document.getElementById('an-trends').innerHTML = [
+    'Avg energy <strong>'+avgEn+'/10</strong> — '+(avgEn>=7?'active, healthy range':'below optimal'),
+    'Top mood: <strong>'+topMood[0]+'</strong> ('+topMood[1]+' of '+n+' days)',
+    'Avg play: <strong>'+(log.reduce(function(s,e){return s+e.play;},0)/n).toFixed(0)+' min/day</strong>',
+    'Primary food: <strong>'+primaryFood+'</strong>',
+    flagDays===0?'Zero health flag events logged':'Flag events on '+flagDays+' day(s) — review details'
+  ].map(function(t){return '• '+t;}).join('<br>');
+  document.getElementById('an-risk').innerHTML   = risks.map(function(r){return '• '+r;}).join('<br>');
+  document.getElementById('an-behav').innerHTML  = [
+    'Mood consistency: <strong>'+(topMood[1]===n?'100%':Math.round(topMood[1]/n*100)+'%')+'</strong> '+topMood[0]+' days',
+    'Fumoi self-cleaning litter enables early detection of GI changes',
+    'Dual water fountains support urinary tract health — key for male cats',
+    'Scratchers + trees in all rooms reduce stress and preserve furniture',
+    skipPlay>0?'Play skipped <strong>'+skipPlay+' day(s)</strong> — watch for motivation dips':'Play routine fully maintained — excellent enrichment'
+  ].map(function(b){return '• '+b;}).join('<br>');
+  document.getElementById('an-pred').innerHTML   = [
+    'Energy expected near <strong>'+avgEn+'/10</strong> if Orijen diet is maintained',
+    litBad>0?'Watch litter box — recent GI irregularities may recur':'Litter box expected to stay <strong>routine</strong>',
+    wtDiff!==null&&wtDiff>0.2?'Mild weight gain — consider reducing dry kibble slightly':'Weight expected to hold near <strong>'+(avgW||'~11')+' lbs</strong>',
+    flagDays===0?'No health events anticipated next 7 days':'Monitor for recurrence of flagged symptoms'
+  ].map(function(p){return '• '+p;}).join('<br>');
+  document.getElementById('an-recs').innerHTML   = [
+    '✅ <strong>Keep Orijen wet + dry combo</strong> — optimal at ~280 kcal/day',
+    '🦷 <strong>Maintain Greenies at 18/day</strong> — dental care within calorie budget',
+    '⚖️ <strong>Log weight weekly</strong> — ideal range 10.5–11.5 lbs',
+    skipPlay>0?'🏃 <strong>Re-engage play sessions</strong> — try wand or feather toys':'🏃 <strong>Keep 30-min daily play</strong> — great for weight and mental health',
+    litBad>0?'🚨 <strong>Vet check if GI issues persist</strong> beyond 3 days':'💧 <strong>Rinse water fountains weekly</strong> — critical for kidney health in male cats',
+    flagDays>0?'📋 <strong>Note timing of health flags</strong> — log what preceded each event':'🌿 <strong>Monthly weigh-in recommended</strong> as Wayne approaches adult weight at 2 yrs'
+  ].join('<br>');
+}
+
+// ── BUILD CARE ─────────────────────────────────────────
+var CARE_KEY = 'waynesworld_care_v1';
+var careTasks = [
+  // FUMOI
+  { id:'fumoi-waste',    device:'Fumoi 95L Litter Box', icon:'🗑️',  label:'Empty waste compartment',      days:7,  steps:['Open the sealed waste drawer at the front of the unit','Remove the liner bag using the drawstring handles','Dispose of waste bag in trash','Insert a fresh liner bag (Fumoi drawstring type)','Slide waste drawer closed until it clicks'] },
+  { id:'fumoi-liner',    device:'Fumoi 95L Litter Box', icon:'🧼',  label:'Rinse & wipe waste liner tray', days:7,  steps:['Remove waste drawer fully','Rinse tray with warm water','Wipe down interior with pet-safe cleaner or diluted white vinegar','Dry completely before reinserting','Check for any odor residue around seals'] },
+  { id:'fumoi-deep',     device:'Fumoi 95L Litter Box', icon:'🫧',  label:'Full deep clean of drum & unit', days:30, steps:['Power off and unplug the unit','Remove all litter from the 95L drum into a trash bag','Detach the drum and waste tray per the Fumoi app instructions','Rinse drum with warm water — do NOT submerge electronics','Wipe inside drum with damp cloth + pet-safe cleaner','Clean infrared sensor windows with a dry microfiber cloth','Dry completely (24h air dry recommended) before reassembling','Refill with fresh litter (clumping or silica)'] },
+  { id:'fumoi-litter',   device:'Fumoi 95L Litter Box', icon:'⚗️',  label:'Refill / top off litter',       days:14, steps:['Check litter level via the Fumoi app or by looking into drum','Add fresh clumping or silica litter to reach fill line','Do not overfill — keep below max indicator','Spread evenly with the included rake if needed'] },
+  { id:'fumoi-sensors',  device:'Fumoi 95L Litter Box', icon:'🔍',  label:'Clean infrared safety sensors',  days:14, steps:['Locate the two infrared sensor windows on the drum opening','Wipe each sensor window gently with a dry microfiber cloth','Do not use liquids directly on sensors','Test sensor by waving hand in front — unit should pause','Check Fumoi app for any sensor error notifications'] },
+  // VEKEN FOUNTAINS (×2)
+  { id:'veken-topoff',   device:'Veken 95oz Fountain (×2)', icon:'💧', label:'Top off water level',          days:2,  steps:['Check water level in both fountains — should be at or near MAX line','Add filtered or softened water as needed','Remove any visible debris or hair from surface','Confirm pump is running (listen for quiet hum ≤30 dB)'] },
+  { id:'veken-weekly',   device:'Veken 95oz Fountain (×2)', icon:'🧽', label:'Full weekly disassembly & wash', days:7, steps:['Unplug both fountains before cleaning','Disassemble: remove flower top, filter housing, pre-filter sponge, pump','Wash all plastic parts with mild pet-safe dish soap + warm water','Use included brush to scrub pump intake and tight crevices','Rinse ALL parts thoroughly — no soap residue','Clean pump impeller with a toothbrush or cotton swab','Air dry all parts before reassembling','Refill to MAX line with fresh filtered water and plug back in'] },
+  { id:'veken-filter',   device:'Veken 95oz Fountain (×2)', icon:'🔄', label:'Replace filter + pre-filter sponge', days:14, steps:['Unplug fountain','Remove old carbon filter and pre-filter sponge from pump','Soak NEW Veken filter in water for 2 minutes, rinse under running water to remove carbon dust','Insert new filter into housing snugly (3.9×3.9×0.4 in)','Attach new pre-filter sponge to pump intake (1.5×1.1×1.0 in)','Reassemble and refill','Repeat for second fountain','Note: replace every 1–2 weeks in summer, 2–4 weeks in winter'] },
+  { id:'veken-pump',     device:'Veken 95oz Fountain (×2)', icon:'⚙️', label:'Deep clean pump (vinegar soak)',  days:30, steps:['Unplug and fully disassemble fountain','Remove pump and detach impeller','Soak pump body in 1:1 white vinegar + water solution for 30 minutes','Use a small brush or cotton swab to scrub impeller and intake screen','Rinse thoroughly with clean water until vinegar smell is gone','Check hoses and connections for mineral buildup or wear','Reassemble and test — listen for quiet steady hum','Repeat for second fountain'] },
+  { id:'veken-descale',  device:'Veken 95oz Fountain (×2)', icon:'🧪', label:'Monthly descale (hard water)',    days:30, steps:['Mix 1 part white vinegar to 3 parts water in a bowl','Soak fountain bowl and reservoir parts for 20–30 minutes','Scrub mineral deposits with soft brush','Rinse ALL parts extremely thoroughly — 3–4 times with fresh water','Do NOT skip rinsing — vinegar residue can deter Wayne from drinking','Refill with filtered water to reduce future buildup'] },
+  // GROOMING — Domestic Short Hair
+  { id:'groom-brush',   device:'Wayne — Grooming', icon:'🪮', label:'Brush coat',                           days:7,  steps:['Use a soft-bristle brush or rubber grooming mitt — DSH coats are short and low-maintenance','Brush in the direction of hair growth from head to tail','Pay extra attention to belly and behind the ears where tangles can form','Check for any bumps, scabs, or skin irritation while brushing','Reward Wayne with a Greenie after each session to build positive association','5 minutes is plenty for a short-hair — don\'t overdo it'] },
+  { id:'groom-nails',   device:'Wayne — Grooming', icon:'✂️', label:'Trim nails',                          days:21, steps:['Use cat-specific nail clippers — never human clippers','Wait until Wayne is calm or sleepy — after a meal works well','Gently press the paw pad to extend each claw','Clip only the clear/white tip — avoid the pink quick (blood vessel)','If you see the quick, stop there — cutting it causes pain and bleeding','Do 1–2 paws per session if Wayne gets antsy — you don\'t have to do all 4 at once','Reward with a Greenie after each paw','Target: every 3 weeks. If you hear clicking on hard floors, it\'s time'] },
+  { id:'groom-ears',    device:'Wayne — Grooming', icon:'👂', label:'Check & clean ears',                   days:14, steps:['Look inside both ears — healthy ears are pale pink with no dark debris or smell','If ears look dirty, apply 1–2 drops of pet-safe ear cleaner to the ear canal','Gently massage the base of the ear for 20–30 seconds — you\'ll hear a squelching sound','Let Wayne shake his head, then wipe the outer ear with a cotton ball','Never insert cotton swabs into the ear canal — only clean what you can see','Red flag: dark brown/black crumbly debris may indicate ear mites — see vet'] },
+  { id:'groom-eyes',    device:'Wayne — Grooming', icon:'👁️', label:'Eye discharge check & wipe',           days:7,  steps:['Check both eyes for any discharge, crustiness, or cloudiness','A small amount of clear or brownish crust in the inner corner is normal for DSH cats','Dampen a cotton ball or soft cloth with warm water (no soap)','Wipe gently from inner corner outward — use a fresh cotton ball per eye','Do NOT wipe from outer to inner — this drags debris toward the eye','Red flags: excessive yellow/green discharge, squinting, redness, or pawing at eye — see vet'] },
+  { id:'groom-teeth',   device:'Wayne — Grooming', icon:'🦷', label:'Dental check (Greenies + visual)',     days:14, steps:['Wayne\'s Greenies dental treats help — but a visual check adds another layer','Lift Wayne\'s lip gently and check both sides of his mouth','Healthy gums: pale pink. Red, swollen, or pale gums = vet visit','Look for yellowing, brown tartar buildup, or broken teeth','If tartar is heavy, ask your vet about a professional dental cleaning under anesthesia','Good news: Greenies reduce tartar by ~60% with consistent daily use at 18/day'] },
+  { id:'groom-bath',    device:'Wayne — Grooming', icon:'🛁', label:'Bath (only if visibly dirty)',          days:90, steps:['DSH cats are excellent self-groomers — baths are rarely needed unless visibly soiled','Use cat-specific shampoo — never human shampoo (wrong pH for cats)','Fill a sink or tub with 3–4 inches of warm (not hot) water','Place a rubber mat so Wayne doesn\'t slip — this reduces panic significantly','Wet coat thoroughly, apply a small amount of shampoo, lather gently','Rinse completely — any shampoo residue causes skin irritation','Wrap in a warm towel immediately and keep Wayne warm until fully dry','Reward heavily with Greenies — this is a big ask for a cat'] }
+];
+
+function loadCareDates() {
+  try {
+    var raw = localStorage.getItem(CARE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveCareDate(taskId) {
+  var dates = loadCareDates();
+  dates[taskId] = new Date().toISOString();
+  try { localStorage.setItem(CARE_KEY, JSON.stringify(dates)); } catch(e) {}
+}
+
+function daysSince(isoDate) {
+  if (!isoDate) return 999;
+  return Math.floor((Date.now() - new Date(isoDate).getTime()) / 86400000);
+}
+
+function statusFor(task, dates) {
+  var ds = daysSince(dates[task.id]);
+  if (ds >= task.days)     return 'overdue';
+  if (ds >= task.days - 2) return 'soon';
+  return 'ok';
+}
+
+function buildCare() {
+  var dates = loadCareDates();
+
+  // Count alerts
+  var overdue = careTasks.filter(function(t){ return statusFor(t,dates)==='overdue'; }).length;
+  var soon    = careTasks.filter(function(t){ return statusFor(t,dates)==='soon'; }).length;
+
+  var alertBar = '';
+  if (overdue > 0) {
+    alertBar += '<div style="background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.3);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<span style="font-size:18px">🚨</span>'
+      +'<span style="font-size:12px;font-weight:700;color:var(--ro)">'+overdue+' task'+(overdue>1?'s':'')+' overdue — Wayne\'s equipment needs attention!</span>'
+      +'</div>';
+  }
+  if (soon > 0) {
+    alertBar += '<div style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.25);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<span style="font-size:18px">⏰</span>'
+      +'<span style="font-size:12px;font-weight:700;color:var(--am)">'+soon+' task'+(soon>1?'s':'')+' due within 2 days — plan ahead!</span>'
+      +'</div>';
+  }
+
+  // Product info cards
+  var productCards = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:16px">'
+    // Fumoi card
+    +'<div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;position:relative;overflow:hidden">'
+    +'<div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--tl)"></div>'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:3px">🚽 Fumoi 95L Self-Cleaning Litter Box</div>'
+    +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:10px">Model: M4 · ASIN B0DNYXKWRV / B0CK1MXC7J</div>'
+    +'<div style="font-size:11px;color:var(--t2);line-height:1.7">'
+    +'<b style="color:var(--tx)">Capacity:</b> 95L drum · 15L sealed waste compartment<br>'
+    +'<b style="color:var(--tx)">Auto-cleaning:</b> Infrared sensors detect Wayne after use, auto-cycle runs after he exits<br>'
+    +'<b style="color:var(--tx)">Litter type:</b> Clumping or silica-based<br>'
+    +'<b style="color:var(--tx)">App control:</b> Schedule cycles, get full-bin alerts, track usage (2.4GHz WiFi)<br>'
+    +'<b style="color:var(--tx)">Liner:</b> Washable + reusable · includes drawstring bags<br>'
+    +'<b style="color:var(--tx)">Night mode:</b> Quiet operation — won\'t disturb sleep<br>'
+    +'<b style="color:var(--tx)">Safety:</b> Pauses instantly if Wayne approaches mid-cycle</div>'
+    +'</div>'
+    // Veken card
+    +'<div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;position:relative;overflow:hidden">'
+    +'<div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--bl)"></div>'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:3px">💧 Veken 95oz Water Fountain (×2)</div>'
+    +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:10px">ASIN B08NCDBT7Q · 2024 Pet Innovation Award Winner</div>'
+    +'<div style="font-size:11px;color:var(--t2);line-height:1.7">'
+    +'<b style="color:var(--tx)">Capacity:</b> 95oz / 2.8L per fountain<br>'
+    +'<b style="color:var(--tx)">Filtration:</b> Triple — activated carbon, ion exchange resin, non-woven fabric<br>'
+    +'<b style="color:var(--tx)">Filter type:</b> 3.9×3.9×0.4in · Pre-filter sponge: 1.5×1.1×1.0in<br>'
+    +'<b style="color:var(--tx)">Flow modes:</b> Flower waterfall + gentle fountain<br>'
+    +'<b style="color:var(--tx)">Pump:</b> Ultra-quiet ≤30dB · 1.5W · 2-year warranty<br>'
+    +'<b style="color:var(--tx)">Material:</b> BPA-free plastic (B08NCDBT7Q = plastic model)<br>'
+    +'<b style="color:var(--tx)">LED indicator:</b> Water level visibility in low light</div>'
+    +'</div>'
+    +'</div>';
+
+  // Task cards
+  var taskHtml = '';
+  var lastDevice = '';
+  careTasks.forEach(function(task) {
+    var st = statusFor(task, dates);
+    var lastDate = dates[task.id];
+    var ds = daysSince(lastDate);
+    var daysLeft = task.days - ds;
+
+    var accentCol = st==='overdue' ? 'var(--ro)' : st==='soon' ? 'var(--am)' : 'var(--gn)';
+    var bgCol     = st==='overdue' ? 'rgba(251,113,133,.07)' : st==='soon' ? 'rgba(245,166,35,.06)' : 'transparent';
+    var statusText = st==='overdue'
+      ? '🚨 OVERDUE by '+(ds-task.days)+' day'+(ds-task.days!==1?'s':'')
+      : st==='soon'
+        ? '⏰ Due in '+daysLeft+' day'+(daysLeft!==1?'s':'')+' — do soon'
+        : '✅ Done — next in '+daysLeft+' day'+(daysLeft!==1?'s':'');
+    var statusColor = st==='overdue'?'var(--ro)':st==='soon'?'var(--am)':'var(--gn)';
+
+    if (task.device !== lastDevice) {
+      taskHtml += '<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin:18px 0 8px;display:flex;align-items:center;gap:6px;font-family:\'DM Mono\',monospace">'
+        +'<span>'+(task.device.includes('Fumoi')?'🚽':task.device.includes('Veken')?'💧':'🪮')+'</span> '+task.device+'</div>';
+      lastDevice = task.device;
+    }
+
+    var stepsHtml = task.steps.map(function(s,i){
+      return '<div style="display:flex;gap:8px;margin-bottom:5px;font-size:11px;color:var(--t2)">'
+        +'<span style="font-family:\'DM Mono\',monospace;color:var(--am);min-width:16px;font-size:9px;margin-top:2px">'+(i+1)+'.</span>'
+        +'<span>'+s+'</span></div>';
+    }).join('');
+
+    taskHtml += '<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:10px;'
+      +'border-left:3px solid '+accentCol+';background:'+bgCol+'">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
+      +'<div>'
+      +'<div style="font-size:13px;font-weight:700;margin-bottom:3px">'+task.icon+' '+task.label+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu)">Every '+task.days+' days</div>'
+      +'</div>'
+      +'<div style="text-align:right">'
+      +'<div style="font-size:10px;font-weight:700;color:'+statusColor+';margin-bottom:4px">'+statusText+'</div>'
+      +(lastDate?'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu)">Last done: '+new Date(lastDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div>':'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--ro)">Never logged</div>')
+      +'</div>'
+      +'</div>'
+      +'<details style="margin-bottom:10px">'
+      +'<summary style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--tl);cursor:pointer;list-style:none;display:flex;align-items:center;gap:5px">▶ How to do this</summary>'
+      +'<div style="margin-top:10px;padding:10px;background:var(--s2);border-radius:8px">'+stepsHtml+'</div>'
+      +'</details>'
+      +'<button class="care-done-btn" data-task="'+task.id+'" style="font-family:\'DM Mono\',monospace;font-size:11px;background:'+accentCol+';color:'+(st==='ok'?'#0d0f14':'#0d0f14')+';border:none;border-radius:7px;padding:6px 14px;cursor:pointer;font-weight:700">✓ Mark as Done Today</button>'
+      +'</div>';
+  });
+
+  var careEl = document.getElementById('page-care');
+
+  // Build grooming info card for DSH
+  var groomCard = '<div class="card" style="background:linear-gradient(135deg,#0d180d,#0d1020);border-color:#1a3a1a;margin-bottom:12px">'
+    +'<div class="ctitle" style="color:var(--gn)"><span class="i">🪮</span> Wayne\'s Grooming Guide — Domestic Short Hair</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:12px">'
+    +[
+      {icon:'🪮',title:'Brushing',freq:'Weekly',note:'DSH coats are low-maintenance. Weekly brushing reduces shedding and hairballs by up to 70%. Use a soft-bristle brush or rubber mitt.',col:'var(--gn)'},
+      {icon:'✂️',title:'Nail Trims',freq:'Every 3 weeks',note:'Indoor cats\' nails don\'t wear down naturally. Overgrown nails curl into paw pads — painful and avoidable with routine trims.',col:'var(--am)'},
+      {icon:'👂',title:'Ear Checks',freq:'Every 2 weeks',note:'Look for dark debris or odor. Clean only the visible outer ear. Dark crumbly buildup may indicate ear mites — see vet.',col:'var(--tl)'},
+      {icon:'👁️',title:'Eye Wipe',freq:'Weekly',note:'Small clear crusts in the inner corner are normal for DSH. Wipe outward with a damp cotton ball. Yellow/green = vet visit.',col:'var(--bl)'},
+      {icon:'🦷',title:'Dental',freq:'Every 2 weeks',note:'Greenies daily handle the heavy lifting. A quick visual check every 2 weeks catches tartar buildup, red gums, or broken teeth early.',col:'var(--vi)'},
+      {icon:'🛁',title:'Baths',freq:'Only if needed',note:'DSH cats self-groom beautifully. Baths only when visibly dirty or post-vet-recommended treatment. Estimate: 2–4 times per year max.',col:'var(--or)'}
+    ].map(function(g){
+      return '<div style="background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:11px;border-left:3px solid '+g.col+'">'
+        +'<div style="font-size:13px;margin-bottom:3px">'+g.icon+' <strong style="color:var(--tx)">'+g.title+'</strong></div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:'+g.col+';margin-bottom:6px;font-weight:700">'+g.freq+'</div>'
+        +'<div style="font-size:11px;color:var(--t2);line-height:1.6">'+g.note+'</div></div>';
+    }).join('')
+    +'</div>'
+    +'<div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px;font-size:11px;color:var(--t2)">'
+    +'💡 <strong style="color:var(--tx)">DSH advantage:</strong> Wayne\'s short coat means grooming sessions are quick — brushing takes 5 min, nail trims 10 min. The Greenies routine already covers 60% of dental care. Total grooming investment: ~20 min per week.'
+    +'</div></div>';
+
+  careEl.innerHTML = alertBar + productCards
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:12px;font-family:\'DM Mono\',monospace">🗓️ Maintenance Schedule</div>'
+    + taskHtml
+    + groomCard;
+
+  // Bind mark-done buttons
+  careEl.querySelectorAll('.care-done-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      saveCareDate(this.getAttribute('data-task'));
+      buildCare();
+    });
+  });
+}
+
+// ── TRAINING ───────────────────────────────────────────
+var TRAIN_KEY = 'waynesworld_training_v1';
+
+var PROGRAMS = [
+  {
+    id: 'backpack',
+    icon: '🎒',
+    title: 'Backpack Adventures',
+    tagline: 'Get Wayne comfortable exploring the world in his cat backpack',
+    color: '#f5a623',
+    tip: 'Use Greenies as high-value rewards throughout — familiar taste = comfort cue. Keep sessions short (5–10 min max early on). Never rush; Wayne sets the pace.',
+    weeks: [
+      {
+        week: 1,
+        label: 'Backpack Introduction',
+        goal: 'Wayne sniffs, enters, and sits in the open backpack voluntarily',
+        sessions: [
+          { day: 'Day 1–2', title: 'Backpack in his space', desc: 'Place the open backpack on the floor near Wayne\'s favorite spot. Do not push him toward it. Let him investigate on his own terms. Toss a Greenie treat inside without hovering — let him walk in to get it.' },
+          { day: 'Day 3–4', title: 'Treats inside, door open', desc: 'Place 2–3 Greenies just inside the opening. Sit nearby calmly. Praise softly when he enters. Do not zip or close — backpack stays fully open. Goal: Wayne walks in and back out comfortably 3+ times.' },
+          { day: 'Day 5–7', title: 'Chilling in the open backpack', desc: 'Encourage Wayne to stay inside for 1–2 minutes by placing his favorite toy or a worn item of your clothing inside. Still no zipping. Reward calm behavior with a Greenie and soft praise.' }
+        ]
+      },
+      {
+        week: 2,
+        label: 'Door Closing',
+        goal: 'Wayne stays calm with the backpack zipped for up to 5 minutes',
+        sessions: [
+          { day: 'Day 1–2', title: 'Partially close the top', desc: 'Once Wayne is inside and calm, gently close the top halfway for 10–15 seconds. If he\'s calm, reward with a Greenie. Open immediately. Repeat 3–4 times per session. Never force.' },
+          { day: 'Day 3–4', title: 'Full zip for 30 seconds', desc: 'Zip the backpack fully. Stay seated next to it. Talk calmly to Wayne. After 30 seconds, unzip and reward with Greenies and affection. If he cries or scratches, unzip earlier next time — no punishment.' },
+          { day: 'Day 5–7', title: 'Extend to 3–5 minutes zipped', desc: 'Build up to 5 minutes zipped while you sit nearby. Place the backpack on your lap. Wayne should hear your heartbeat and voice — this is reassuring. Reward generously each time.' }
+        ]
+      },
+      {
+        week: 3,
+        label: 'Movement & Carrying',
+        goal: 'Wayne stays relaxed while you walk around the house with him in the backpack',
+        sessions: [
+          { day: 'Day 1–2', title: 'Lift and hold (standing)', desc: 'Zip Wayne in, then gently lift the backpack and stand in place for 30 seconds. Speak calmly. Set down and reward. Goal: no panicked movements or loud crying.' },
+          { day: 'Day 3–4', title: 'Walk around the house', desc: 'Zip Wayne in and walk slowly through 2–3 rooms inside your home. Talk to him as you go. Point out things: "Look Wayne, the kitchen!" Keep it under 5 minutes. End with Greenies and unzip.' },
+          { day: 'Day 5–7', title: 'Front yard or driveway (first outdoor step)', desc: 'Step outside your front door for 2–3 minutes with Wayne in the backpack. Let him see and smell the outside world from the safety of the bag. This is a big milestone — reward heavily!' }
+        ]
+      },
+      {
+        week: 4,
+        label: 'First Real Walks',
+        goal: 'Wayne enjoys a 10–15 minute neighborhood walk in his backpack',
+        sessions: [
+          { day: 'Day 1–2', title: 'Short 5-min neighborhood walk', desc: 'Walk at a slow, calm pace. Choose a quiet time of day (early morning works best — less traffic noise, fewer dogs). Let Wayne look out the bubble window if he wants. Watch his body language: ears forward = curious, ears flat = stressed. End on a positive note.' },
+          { day: 'Day 3–5', title: 'Build to 10–15 minutes', desc: 'Extend walk time gradually. Let Wayne sniff new smells through the mesh openings. If he chirps or looks alert, he\'s engaged — great sign! If he\'s quiet and still, he\'s either calm or overwhelmed — check by stopping and observing.' },
+          { day: 'Day 6–7', title: 'Vary the route', desc: 'Try a slightly different path each time so Wayne builds confidence with new environments rather than anxiety. Always bring Greenies in your pocket. End every walk at home with treats and cuddles.' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'enrichment',
+    icon: '🏠',
+    title: 'Indoor Enrichment Master',
+    tagline: 'Keep Wayne mentally stimulated, happy, and thriving as an indoor cat',
+    color: '#4ade80',
+    tip: 'Bored indoor cats develop behavioral issues — aggression, over-grooming, or destroying furniture. Consistent enrichment keeps Wayne sharp, calm, and bonded to you. Think of it as mental exercise.',
+    weeks: [
+      {
+        week: 1,
+        label: 'Window World',
+        goal: 'Wayne has a dedicated window watching spot he uses daily',
+        sessions: [
+          { day: 'Day 1–2', title: 'Set up a window perch', desc: 'Install a window perch or position his cat tree next to your best-view window. Ideally one facing a garden, street, or bird activity. Sprinkle a few Greenies on it to draw him over. Wayne discovering birds outside is instant enrichment.' },
+          { day: 'Day 3–4', title: 'Add a bird feeder outside', desc: 'Place a suction-cup window bird feeder on the outside of his favorite window. Sunflower seeds attract finches; tube feeders attract multiple species. This becomes live cat TV — free, endless, and endlessly engaging for Wayne.' },
+          { day: 'Day 5–7', title: 'Cat TV on screen', desc: 'On days with no bird activity, play "Cat TV" on YouTube (search: "4K cat tv birds squirrels"). Leave it on a TV or tablet near his perch while you work. Studies show indoor cats with window/screen stimulation show lower stress markers.' }
+        ]
+      },
+      {
+        week: 2,
+        label: 'Puzzle Feeding',
+        goal: 'Wayne eats at least one meal per day from a puzzle feeder instead of a bowl',
+        sessions: [
+          { day: 'Day 1–2', title: 'Introduce a simple puzzle', desc: 'Start with a muffin tin — put small pieces of Orijen dry or a Greenie in each cup and cover some with tennis balls. Wayne has to remove the balls to get the food. Sounds silly, works brilliantly. Do this for his morning dry portion.' },
+          { day: 'Day 3–4', title: 'Licki mat for wet food', desc: 'Spread his Orijen wet food on a licki mat (silicone textured mat). It extends mealtime from 30 seconds to 5–10 minutes and provides oral stimulation and stress relief. Dishwasher safe — easy to clean.' },
+          { day: 'Day 5–7', title: 'Rotate puzzle types', desc: 'Try a different puzzle each day — hide kibble under cups, in toilet paper rolls with folded ends, or in a cardboard egg carton. The variety keeps Wayne\'s brain working. Aim: at least 1 puzzle feeding per day permanently.' }
+        ]
+      },
+      {
+        week: 3,
+        label: 'Play Variety',
+        goal: 'Wayne has 3+ different play styles in regular rotation',
+        sessions: [
+          { day: 'Day 1–2', title: 'Wand toy mastery', desc: 'The Da Bird feather wand is the gold standard — it mimics real bird flight. Move it irregularly: fast bursts, slow creeping, hiding behind furniture. Always let Wayne "catch" the prey at the end of a session or he\'ll feel frustrated. 10–15 min morning and evening.' },
+          { day: 'Day 3–4', title: 'Solo toys for when you\'re busy', desc: 'Get a battery-powered moving toy (e.g. Hexbug, Ripple Rug, or a spinning feather tower). Place it while you work from home. Wayne gets stimulation without needing you to hold a wand. Rotate toys in and out every few days — novelty is everything.' },
+          { day: 'Day 5–7', title: 'Chase and fetch', desc: 'Many cats can learn to fetch. Toss a crinkle ball or a foil ball down the hallway. If Wayne bats at it, reward with a Greenie. Some cats naturally bring it back — if Wayne does this, reinforce it heavily. A cat who fetches is peak enrichment.' }
+        ]
+      },
+      {
+        week: 4,
+        label: 'Scent & Trick Training',
+        goal: 'Wayne responds to his name and knows at least 1 trick on cue',
+        sessions: [
+          { day: 'Day 1–2', title: 'Name recognition game', desc: 'Say "Wayne!" in a cheerful tone. The moment he looks at you, immediately toss a Greenie toward him. Repeat 10× per session, twice a day. Within a few days he should reliably look up when you say his name from across the room.' },
+          { day: 'Day 3–4', title: 'Sit on cue', desc: 'Hold a Greenie above Wayne\'s nose and slowly move it back over his head. His natural response is to sit. The moment his bottom touches the ground, say "Sit!" and give the treat. Cats can absolutely learn this — it just takes patience and tiny rewards.' },
+          { day: 'Day 5–7', title: 'Scent enrichment', desc: 'Rub a small amount of catnip, silvervine, or valerian on a sock and hide it around the house. Let Wayne hunt it using his nose. You can also place a piece of your worn clothing in a new spot each day — your scent is comforting and stimulating for him simultaneously.' }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'car',
+    icon: '🚗',
+    title: 'Car Ride Confidence',
+    tagline: 'Make car rides calm and stress-free for Wayne',
+    color: '#a78bfa',
+    tip: 'Car anxiety in cats is about the unknown — engine vibration, motion, smells. Build familiarity one tiny step at a time. Feliway spray on the carrier 30 min before each ride can help significantly.',
+    weeks: [
+      {
+        week: 1,
+        label: 'Carrier Love',
+        goal: 'Wayne voluntarily enters and rests in his carrier at home',
+        sessions: [
+          { day: 'Day 1–2', title: 'Carrier as furniture', desc: 'Place Wayne\'s carrier (door open) in the living room with his blanket inside. Do not use it as a grab-and-go stressor — make it a cozy spot he chooses. Drop Greenies inside randomly throughout the day.' },
+          { day: 'Day 3–4', title: 'Meals near the carrier', desc: 'Feed Wayne his Orijen meals just outside the carrier entrance, then gradually move the bowl to the entrance, then just inside. By day 4 he should be eating comfortably with half his body in the carrier.' },
+          { day: 'Day 5–7', title: 'Napping in the carrier', desc: 'If Wayne starts voluntarily resting inside the carrier — this is a huge win. Place a worn t-shirt of yours inside for scent comfort. Gently close the door for 30-second intervals while he rests.' }
+        ]
+      },
+      {
+        week: 2,
+        label: 'Engine Sounds',
+        goal: 'Wayne stays calm hearing and feeling car engine vibration',
+        sessions: [
+          { day: 'Day 1–2', title: 'Carrier in a parked car (engine off)', desc: 'Place Wayne in his carrier and put the carrier in your parked car (in the garage or driveway). Sit in the back seat with him. Talk calmly for 5 minutes. Give Greenies. Take him back inside. Repeat twice.' },
+          { day: 'Day 3–4', title: 'Start the engine, stay parked', desc: 'With Wayne in carrier in the car, start the engine. Let it run for 2–3 minutes while you sit next to him and talk softly. Turn off, reward, take him inside. Watch for stress signs: panting, excessive meowing, drooling.' },
+          { day: 'Day 5–7', title: 'Engine + AC or music', desc: 'Run the engine with soft music or a podcast (familiar voices are soothing). Sit with Wayne for up to 5 minutes. Reward calm behavior. The goal is engine noise = Greenies + Avani\'s voice.' }
+        ]
+      },
+      {
+        week: 3,
+        label: 'First Short Drives',
+        goal: 'Wayne completes a 5-minute drive without significant distress',
+        sessions: [
+          { day: 'Day 1–2', title: 'Drive around the block once', desc: 'Buckle Wayne\'s carrier safely in the back seat (carrier secured with seatbelt). Drive slowly around one block — about 2–3 minutes. Talk to Wayne the entire time: "Good boy, we\'re almost home!" Return and reward heavily.' },
+          { day: 'Day 3–4', title: '5-minute drive', desc: 'Take Wayne on a 5-minute gentle drive through the neighborhood. Avoid highways or sudden stops. Keep windows up (no overwhelming smells yet). Calm music on. Reward the moment you get back home.' },
+          { day: 'Day 5–7', title: 'Repeat and normalize', desc: 'Drive 5 minutes every other day this week. Consistency is everything — Wayne learns that car = comes home safely = treats. End every trip inside his safe home territory.' }
+        ]
+      },
+      {
+        week: 4,
+        label: 'Longer Adventures',
+        goal: 'Wayne tolerates 15–20 minute drives calmly — ready for vet trips or errands',
+        sessions: [
+          { day: 'Day 1–2', title: '10-minute drive with stops', desc: 'Drive 10 minutes with one gentle stop (parking lot, etc.). Let Wayne hear different environments from inside the carrier. Return home safely. Watch for improvement: less meowing, more settled posture.' },
+          { day: 'Day 3–5', title: '15-minute round trip', desc: 'Drive somewhere nearby (a quiet park, a pet store) and back. Wayne doesn\'t need to get out — the destination is secondary. The win is the ride itself going smoothly.' },
+          { day: 'Day 6–7', title: 'Vet trip dry run', desc: 'Drive to your vet\'s parking lot, sit for a few minutes, and drive home. No appointment — just the location. This prevents the "only car ride = vet = something scary" association. Reward hugely.' }
+        ]
+      }
+    ]
+  }
+];
+
+var TRAIN_TIPS = [
+  '🐾 Keep sessions to 5–10 min max — cats learn best in short, positive bursts',
+  '🦷 Greenies are your secret weapon — always train right before a meal when Wayne is motivated',
+  '😌 End every session on a WIN — never finish when he\'s stressed or resistant',
+  '📅 Consistency beats intensity — 5 min daily beats 1 hour weekly',
+  '🚫 Never punish — if Wayne retreats or hides, the session is over for the day',
+  '🎯 One goal per session — don\'t try backpack + car + tricks all at once',
+  '🌡️ Watch body language: ears forward + slow blinking = happy. Flat ears + puffed tail = stop immediately',
+  '⏰ Morning sessions work best — Wayne is alert but relaxed after breakfast'
+];
+
+function loadTrainingData() {
+  try { var r = localStorage.getItem(TRAIN_KEY); return r ? JSON.parse(r) : {}; } catch(e) { return {}; }
+}
+function saveTrainingData(data) {
+  try { localStorage.setItem(TRAIN_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function buildTraining() {
+  var data = loadTrainingData();
+  var el = document.getElementById('page-training');
+
+  // Progress overview
+  var totalSessions = 0, completedSessions = 0;
+  PROGRAMS.forEach(function(prog){
+    prog.weeks.forEach(function(wk){
+      wk.sessions.forEach(function(sess){
+        totalSessions++;
+        var key = prog.id+'_w'+wk.week+'_s'+sess.day;
+        if(data[key] && data[key].done) completedSessions++;
+      });
+    });
+  });
+  var pct = totalSessions ? Math.round(completedSessions/totalSessions*100) : 0;
+
+  var html = '';
+
+  // Header
+  html += '<div style="background:linear-gradient(135deg,#0d1428,#141a28);border:1px solid var(--bd);border-radius:var(--r);padding:18px;margin-bottom:14px">'
+    +'<div style="font-family:\'Cinzel\',serif;font-size:20px;margin-bottom:4px">Wayne\'s Training Academy 🎓</div>'
+    +'<div style="font-size:11px;color:var(--t2);margin-bottom:14px">Building confidence for backpack walks, car rides, and indoor enrichment — one session at a time.</div>'
+    +'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:160px">'
+    +'<div style="display:flex;justify-content:space-between;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu);margin-bottom:5px"><span>Overall Progress</span><span style="color:var(--am)">'+completedSessions+' / '+totalSessions+' sessions</span></div>'
+    +'<div style="height:8px;background:var(--bd);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--am),var(--gn));border-radius:4px;transition:width .5s"></div></div>'
+    +'</div>'
+    +'<div style="font-size:22px;font-weight:800;color:var(--am)">'+pct+'%</div>'
+    +'</div></div>';
+
+  // Tips rotator
+  var tipIdx = Math.floor(Math.random() * TRAIN_TIPS.length);
+  html += '<div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:11px;color:var(--t2);display:flex;align-items:center;gap:8px">'
+    +'<span style="font-size:16px">💡</span><span><strong style="color:var(--vi)">Training Tip:</strong> '+TRAIN_TIPS[tipIdx]+'</span></div>';
+
+  // Program cards
+  PROGRAMS.forEach(function(prog){
+    var progDone = 0, progTotal = 0;
+    prog.weeks.forEach(function(wk){ wk.sessions.forEach(function(sess){ progTotal++; var k=prog.id+'_w'+wk.week+'_s'+sess.day; if(data[k]&&data[k].done) progDone++; }); });
+    var progPct = progTotal ? Math.round(progDone/progTotal*100) : 0;
+
+    html += '<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:14px;overflow:hidden">';
+    // Program header
+    html += '<div style="padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;cursor:pointer" onclick="toggleProgram(\'prog-'+prog.id+'\')">'
+      +'<div>'
+      +'<div style="font-size:15px;font-weight:800;margin-bottom:2px">'+prog.icon+' '+prog.title+'</div>'
+      +'<div style="font-size:11px;color:var(--t2)">'+prog.tagline+'</div>'
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:'+prog.color+';font-weight:700">'+progDone+'/'+progTotal+' done</div>'
+      +'<div style="width:80px;height:5px;background:var(--bd);border-radius:3px;margin-top:5px;overflow:hidden"><div style="height:100%;width:'+progPct+'%;background:'+prog.color+';border-radius:3px"></div></div>'
+      +'</div>'
+      +'</div>';
+
+    html += '<div id="prog-'+prog.id+'" style="padding:14px 16px">';
+
+    // Tip
+    html += '<div style="background:rgba(245,166,35,.07);border-left:3px solid '+prog.color+';padding:8px 12px;border-radius:0 8px 8px 0;font-size:11px;color:var(--t2);margin-bottom:14px">'+prog.tip+'</div>';
+
+    // Weeks
+    prog.weeks.forEach(function(wk){
+      var wkDone=0;
+      wk.sessions.forEach(function(sess){ var k=prog.id+'_w'+wk.week+'_s'+sess.day; if(data[k]&&data[k].done) wkDone++; });
+      var wkComplete = wkDone===wk.sessions.length;
+
+      html += '<div style="margin-bottom:14px">';
+      html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+        +'<div style="width:22px;height:22px;border-radius:50%;background:'+(wkComplete?prog.color:'var(--bd)')+';display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#0d0f14;flex-shrink:0">'+(wkComplete?'✓':wk.week)+'</div>'
+        +'<div><div style="font-size:12px;font-weight:700">Week '+wk.week+': '+wk.label+'</div>'
+        +'<div style="font-size:10px;color:var(--mu)">Goal: '+wk.goal+'</div></div></div>';
+
+      wk.sessions.forEach(function(sess){
+        var key = prog.id+'_w'+wk.week+'_s'+sess.day;
+        var done = data[key] && data[key].done;
+        var doneDate = done ? data[key].date : null;
+
+        html += '<div style="background:var(--s2);border:1px solid '+(done?prog.color:'var(--bd)')+';border-radius:10px;padding:12px;margin-bottom:7px;opacity:'+(done?'.75':'1')+'">'
+          +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px">'
+          +'<div>'
+          +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:'+prog.color+';margin-bottom:2px">'+sess.day+'</div>'
+          +'<div style="font-size:12px;font-weight:700">'+(done?'<s style="opacity:.5">':'')+sess.title+(done?'</s>':'')+'</div>'
+          +'</div>'
+          +(done?'<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:'+prog.color+'">✓ Done '+new Date(doneDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>':'')
+          +'</div>'
+          +'<div style="font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px">'+sess.desc+'</div>'
+          +(done
+            ? '<button data-key="'+key+'" class="train-undo" style="font-family:\'DM Mono\',monospace;font-size:10px;background:none;border:1px solid var(--bd);color:var(--mu);padding:4px 10px;border-radius:6px;cursor:pointer">↩ Undo</button>'
+            : '<button data-key="'+key+'" class="train-done" style="font-family:\'DM Mono\',monospace;font-size:11px;background:'+prog.color+';color:#0d0f14;border:none;padding:6px 14px;border-radius:7px;cursor:pointer;font-weight:700">✓ Session Complete!</button>'
+          )
+          +'</div>';
+      });
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  // Notes section
+  var notes = data['__notes__'] || '';
+  html += '<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:14px">'
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin-bottom:10px">📝 Training Journal</div>'
+    +'<textarea id="train-notes" style="min-height:80px" placeholder="Note Wayne\'s progress, what worked, what didn\'t, funny moments...">'+notes+'</textarea>'
+    +'<button id="save-notes-btn" style="font-family:\'DM Mono\',monospace;font-size:11px;background:var(--am);color:#0d0f14;border:none;padding:7px 16px;border-radius:7px;cursor:pointer;font-weight:700;margin-top:8px">Save Notes</button>'
+    +'</div>';
+
+  el.innerHTML = html;
+
+  // Bind session complete buttons
+  el.querySelectorAll('.train-done').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = loadTrainingData();
+      d[this.getAttribute('data-key')] = { done:true, date: new Date().toISOString() };
+      saveTrainingData(d);
+      buildTraining();
+    });
+  });
+  el.querySelectorAll('.train-undo').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d = loadTrainingData();
+      delete d[this.getAttribute('data-key')];
+      saveTrainingData(d);
+      buildTraining();
+    });
+  });
+  document.getElementById('save-notes-btn').addEventListener('click', function(){
+    var d = loadTrainingData();
+    d['__notes__'] = document.getElementById('train-notes').value;
+    saveTrainingData(d);
+    var btn = this; btn.textContent = '✓ Saved!';
+    setTimeout(function(){ btn.textContent = 'Save Notes'; }, 1500);
+  });
+}
+
+function toggleProgram(id) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+})();
+</script>
+
+<!-- ══ CARE PAGE ══ -->
+<div class="page" id="page-care" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+
+<!-- ══ TRAINING PAGE ══ -->
+<div class="page" id="page-training" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+<!-- ══ MEDICAL PAGE ══ -->
+<div class="page" id="page-medical" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+<!-- ══ SOS PAGE ══ -->
+<div class="page" id="page-sos" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+<!-- ══ SUPPLIES PAGE ══ -->
+<div class="page" id="page-supplies" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+<!-- ══ MILESTONES PAGE ══ -->
+<div class="page" id="page-milestones" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+<!-- ══ BUDGET PAGE ══ -->
+<div class="page" id="page-budget" style="padding:16px 16px 60px;max-width:960px;margin:0 auto"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  MEDICAL
+// ═══════════════════════════════════════════════════
+var MED_KEY='waynesworld_medical_v1';
+function loadMed(){try{var r=localStorage.getItem(MED_KEY);return r?JSON.parse(r):{};}catch(e){return{};}}
+function saveMed(d){try{localStorage.setItem(MED_KEY,JSON.stringify(d));}catch(e){}}
+
+var VACCINES=[
+  {id:'fvrcp',name:'FVRCP (Core)',interval:365,desc:'Viral rhinotracheitis, calicivirus, panleukopenia'},
+  {id:'rabies',name:'Rabies',interval:365,desc:'Required by CA law — annual or 3-year booster'},
+  {id:'felv',name:'FeLV (Feline Leukemia)',interval:365,desc:'Recommended for cats with outdoor access'}
+];
+var SYMPTOM_GUIDE=[
+  {level:'er',label:'🚨 GO TO ER NOW',color:'#fb7185',bg:'rgba(251,113,133,.1)',items:['Cannot urinate / straining with no output (CRITICAL for male cats)','Seizures or convulsions','Not breathing or gasping','Suspected poisoning (lilies, antifreeze, xylitol, Tylenol)','Major trauma or fall from height','Severe bleeding that won\'t stop','Sudden hind leg paralysis','Unconscious or unresponsive']},
+  {level:'urgent',label:'⚠️ URGENT — Vet within 24h',color:'#f5a623',bg:'rgba(245,166,35,.07)',items:['Vomiting 3+ times in one day','Not eating for 24+ hours','Blood in urine, stool, or vomit','Crying when using litter box','Limping or holding paw up','Swollen abdomen','Eye cloudiness or discharge','Drooling excessively','Suspected fever (warm ears, lethargy)']},
+  {level:'watch',label:'👀 WATCH — Monitor 48h',color:'#4ade80',bg:'rgba(74,222,128,.05)',items:['Single vomit (no blood)','Mild lethargy — still eating and drinking','Small appetite decrease','Sneezing 1–2 times','Mild one-time diarrhea','Hiding without other symptoms','Very minor limping that resolves quickly']}
+];
+var TOXIC_ITEMS={
+  '🌸 Plants — FATAL':['Lilies (ALL species — Easter, Tiger, Asiatic)','Sago Palm','Azalea / Rhododendron','Oleander','Tulip bulbs','Daffodil bulbs'],
+  '🍫 Foods':['Onions & garlic (all forms)','Grapes & raisins','Chocolate','Xylitol (sugar-free gum, peanut butter)','Alcohol','Raw yeast dough','Caffeine'],
+  '🧪 Household':['Antifreeze (ethylene glycol)','Essential oils (tea tree, eucalyptus, peppermint)','Bleach & cleaning products','Acetaminophen / Tylenol — FATAL','Aspirin & ibuprofen','Dog-only flea products']
+};
+
+function buildMedical(){
+  var d=loadMed();var el=document.getElementById('page-medical');var html='';
+  // ID card
+  html+='<div class="card" style="background:linear-gradient(135deg,#0d1a14,#0d1428);border-color:#1a3a1a">'
+    +'<div class="ctitle" style="color:var(--gn)"><span class="i">🐱</span> Wayne\'s Medical ID</div>'
+    +'<div class="fgrid">'
+    +['DOB / Age|dobage|e.g. Mar 2024 · ~1 yr','Microchip #|microchip|Enter chip number','Blood Type|bloodtype|e.g. Type A','Breed|breed|e.g. Domestic shorthair','Vet Name|vetname|e.g. Banfield Pet Hospital','Vet Phone|vetphone|(000) 000-0000','Pet Insurance|insurance|e.g. Pets Best / Figo','Neutered?|neutered|Yes / No + date'].map(function(row){
+      var parts=row.split('|');var lbl=parts[0],k=parts[1],ph=parts[2];
+      return '<div class="fg"><label>'+lbl+'</label><input type="text" class="med-profile" data-key="'+k+'" value="'+((d.profile||{})[k]||'')+'" placeholder="'+ph+'"></div>';
+    }).join('')
+    +'</div><button id="save-profile-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px">Save Profile</button></div>';
+  // Vaccines
+  html+='<div class="card"><div class="ctitle"><span class="i">💉</span> Vaccination Tracker</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:8px">';
+  VACCINES.forEach(function(v){
+    var last=(d.vax||{})[v.id];
+    var ds=last?Math.floor((Date.now()-new Date(last).getTime())/86400000):null;
+    var dueIn=ds!==null?v.interval-ds:null;
+    var st=!last?'unknown':dueIn<0?'overdue':dueIn<30?'soon':'ok';
+    var col=st==='ok'?'var(--gn)':st==='soon'?'var(--am)':'var(--ro)';
+    var stTxt=!last?'Never recorded':st==='overdue'?'⚠️ Overdue by '+Math.abs(dueIn)+'d':st==='soon'?'⏰ Due in '+dueIn+'d':'✅ Due in '+dueIn+' days';
+    html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;border-left:3px solid '+col+'">'
+      +'<div style="font-size:12px;font-weight:700;margin-bottom:2px">'+v.name+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:6px">'+v.desc+'</div>'
+      +'<div style="font-size:10px;color:'+col+';font-weight:700;margin-bottom:7px">'+stTxt+'</div>'
+      +'<div class="fg"><label>Date Given</label><input type="date" class="vax-date" data-id="'+v.id+'" value="'+(last||'')+'"></div></div>';
+  });
+  html+='</div><button id="save-vax-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px">Save Vaccine Dates</button></div>';
+  // Meds
+  var meds=d.meds||[];
+  html+='<div class="card"><div class="ctitle" style="justify-content:space-between;display:flex"><span><span class="i">💊</span> Medications & Supplements</span><button id="add-med-btn" class="btn-sm">+ Add</button></div>'
+    +'<div id="med-list">'+(meds.length===0?'<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--mu)">None logged yet.</div>':meds.map(function(m,i){
+    return '<div style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      +'<div><div style="font-size:12px;font-weight:700">'+m.name+'</div><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu)">'+m.dose+' · '+m.freq+'</div>'+(m.note?'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+m.note+'</div>':'')+'</div>'
+      +'<button class="del-med" data-i="'+i+'" style="background:none;border:none;color:var(--mu);cursor:pointer;font-size:12px">✕</button></div>';
+  }).join(''))+'</div>'
+  +'<div id="add-med-form" style="display:none;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-top:8px">'
+  +'<div class="fgrid"><div class="fg"><label>Name</label><input type="text" id="med-name" placeholder="e.g. Laxatone hairball gel"></div>'
+  +'<div class="fg"><label>Dose</label><input type="text" id="med-dose" placeholder="e.g. ½ tsp"></div>'
+  +'<div class="fg"><label>Frequency</label><input type="text" id="med-freq" placeholder="e.g. Daily with dinner"></div>'
+  +'<div class="fg"><label>Notes</label><input type="text" id="med-note" placeholder="Reason / started date"></div></div>'
+  +'<button id="save-med-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px">Save</button></div></div>';
+  // Appointments
+  var appts=d.appts||[];
+  html+='<div class="card"><div class="ctitle" style="justify-content:space-between;display:flex"><span><span class="i">📅</span> Vet Appointments</span><button id="add-appt-btn" class="btn-sm">+ Add</button></div>'
+    +'<div id="appt-list">'+(appts.length===0?'<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--mu)">None logged yet.</div>':appts.slice().reverse().map(function(a,i){
+    var ri=appts.length-1-i;var up=new Date(a.date)>new Date();
+    return '<div style="background:var(--s2);border:1px solid '+(up?'var(--am)':'var(--bd)')+';border-radius:9px;padding:10px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      +'<div><div style="display:flex;align-items:center;gap:6px;margin-bottom:2px"><span style="font-family:\'DM Mono\',monospace;font-size:10px;color:'+(up?'var(--am)':'var(--mu)')+'">'+new Date(a.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span><span class="badge '+(up?'by':'bg')+'">'+(up?'Upcoming':'Past')+'</span></div>'
+      +'<div style="font-size:12px;font-weight:700">'+a.reason+'</div>'+(a.notes?'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+a.notes+'</div>':'')+'</div>'
+      +'<button class="del-appt" data-i="'+ri+'" style="background:none;border:none;color:var(--mu);cursor:pointer;font-size:12px">✕</button></div>';
+  }).join(''))+'</div>'
+  +'<div id="add-appt-form" style="display:none;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-top:8px">'
+  +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="appt-date"></div>'
+  +'<div class="fg"><label>Reason</label><input type="text" id="appt-reason" placeholder="e.g. Annual wellness exam"></div>'
+  +'<div class="fg"><label>Notes / Outcome</label><input type="text" id="appt-notes" placeholder="e.g. All clear, 10.9 lbs"></div></div>'
+  +'<button id="save-appt-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px">Save</button></div></div>';
+  // Symptom guide
+  html+='<div class="card"><div class="ctitle"><span class="i">🌡️</span> Symptom Triage — When to Call the Vet</div>';
+  SYMPTOM_GUIDE.forEach(function(g){
+    html+='<div style="background:'+g.bg+';border:1px solid '+g.color+'40;border-radius:10px;padding:12px;margin-bottom:10px">'
+      +'<div style="font-size:11px;font-weight:800;color:'+g.color+';margin-bottom:7px">'+g.label+'</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:3px">'
+      +g.items.map(function(i){return'<div style="font-size:11px;color:var(--t2);display:flex;gap:5px"><span style="color:'+g.color+';flex-shrink:0">›</span>'+i+'</div>';}).join('')
+      +'</div></div>';
+  });
+  html+='</div>';
+  // Toxic
+  html+='<div class="card"><div class="ctitle"><span class="i">☠️</span> Toxic to Cats — Quick Reference</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">';
+  Object.entries(TOXIC_ITEMS).forEach(function(entry){
+    html+='<div style="background:rgba(251,113,133,.06);border:1px solid rgba(251,113,133,.2);border-radius:10px;padding:12px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--ro);margin-bottom:7px">'+entry[0]+'</div>'
+      +entry[1].map(function(i){return'<div style="font-size:11px;color:var(--t2);margin-bottom:3px;display:flex;gap:5px"><span style="color:var(--ro)">✗</span>'+i+'</div>';}).join('')
+      +'</div>';
+  });
+  html+='</div></div>';
+
+  el.innerHTML=html;
+  document.getElementById('save-profile-btn').addEventListener('click',function(){
+    var d2=loadMed();d2.profile={};
+    el.querySelectorAll('.med-profile').forEach(function(inp){d2.profile[inp.getAttribute('data-key')]=inp.value;});
+    saveMed(d2);this.textContent='✓ Saved!';var b=this;setTimeout(function(){b.textContent='Save Profile';},1500);
+  });
+  document.getElementById('save-vax-btn').addEventListener('click',function(){
+    var d2=loadMed();d2.vax={};
+    el.querySelectorAll('.vax-date').forEach(function(inp){if(inp.value)d2.vax[inp.getAttribute('data-id')]=inp.value;});
+    saveMed(d2);buildMedical();
+  });
+  document.getElementById('add-med-btn').addEventListener('click',function(){
+    var f=document.getElementById('add-med-form');f.style.display=f.style.display==='none'?'block':'none';
+  });
+  document.getElementById('save-med-btn').addEventListener('click',function(){
+    var name=document.getElementById('med-name').value.trim();if(!name)return;
+    var d2=loadMed();d2.meds=d2.meds||[];
+    d2.meds.push({name:name,dose:document.getElementById('med-dose').value,freq:document.getElementById('med-freq').value,note:document.getElementById('med-note').value});
+    saveMed(d2);buildMedical();
+  });
+  el.querySelectorAll('.del-med').forEach(function(btn){
+    btn.addEventListener('click',function(){var d2=loadMed();d2.meds.splice(+this.getAttribute('data-i'),1);saveMed(d2);buildMedical();});
+  });
+  document.getElementById('add-appt-btn').addEventListener('click',function(){
+    var f=document.getElementById('add-appt-form');f.style.display=f.style.display==='none'?'block':'none';
+  });
+  document.getElementById('save-appt-btn').addEventListener('click',function(){
+    var reason=document.getElementById('appt-reason').value.trim();var date=document.getElementById('appt-date').value;
+    if(!reason||!date)return;
+    var d2=loadMed();d2.appts=d2.appts||[];
+    d2.appts.push({date:date,reason:reason,notes:document.getElementById('appt-notes').value});
+    d2.appts.sort(function(a,b){return a.date.localeCompare(b.date);});
+    saveMed(d2);buildMedical();
+  });
+  el.querySelectorAll('.del-appt').forEach(function(btn){
+    btn.addEventListener('click',function(){var d2=loadMed();d2.appts.splice(+this.getAttribute('data-i'),1);saveMed(d2);buildMedical();});
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  SOS
+// ═══════════════════════════════════════════════════
+var SOS_KEY='waynesworld_sos_v1';
+function loadSOS(){try{var r=localStorage.getItem(SOS_KEY);return r?JSON.parse(r):{};}catch(e){return{};}}
+function saveSOS(d){try{localStorage.setItem(SOS_KEY,JSON.stringify(d));}catch(e){}}
+
+function buildSOS(){
+  var d=loadSOS();var el=document.getElementById('page-sos');var html='';
+  var med=loadMed();var prof=med.profile||{};
+  html+='<div style="background:rgba(251,113,133,.15);border:2px solid rgba(251,113,133,.4);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;text-align:center">'
+    +'<div style="font-size:16px;font-weight:800;color:var(--ro);margin-bottom:3px">🚨 Emergency Quick Reference — Wayne</div>'
+    +'<div style="font-size:11px;color:var(--t2)">Screenshot this page and share with pet sitters. Contacts update automatically when you save below.</div></div>';
+  // Key numbers
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px">';
+  [{label:'☎️ ASPCA Poison Control',val:'(888) 426-4435',note:'24/7 · Consult fee may apply',col:'var(--ro)'},
+   {label:'🚑 24hr Emergency Vet',val:d.erphone||(d.ervet?d.ervet:'Add below →'),note:d.ervet||'Not set yet',col:'var(--am)'},
+   {label:'🩺 Regular Vet',val:d.vetphone||(d.vet?d.vet:'Add below →'),note:d.vet||'Not set yet',col:'var(--tl)'},
+   {label:'👩 Avani (Owner)',val:d.owner||'Add below →',note:'Primary contact',col:'var(--gn)'},
+   {label:'🏠 Pet Sitter',val:d.sitter||'Add below →',note:'Backup contact',col:'var(--vi)'}
+  ].forEach(function(f){
+    html+='<div style="background:var(--s2);border:2px solid '+f.col+'30;border-radius:var(--r);padding:14px;text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--mu);margin-bottom:4px">'+f.label+'</div>'
+      +'<div style="font-size:14px;font-weight:800;color:'+f.col+'">'+f.val+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-top:3px">'+f.note+'</div></div>';
+  });
+  html+='</div>';
+  // Wayne key info
+  html+='<div class="card"><div class="ctitle"><span class="i">🐱</span> Wayne At a Glance</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;margin-bottom:10px">';
+  [['Microchip #',prof.microchip||'—'],['DOB / Age',prof.dobage||'~Mar 2024 · 1 yr'],
+   ['Breed',prof.breed||'Domestic cat'],['Weight','~11 lbs (indoor)'],
+   ['Neutered?',prof.neutered||'—'],['Diet','Orijen wet+dry · 280 kcal/day'],
+   ['Allergies','None known'],['Litter','Fumoi 95L (self-cleaning)']
+  ].forEach(function(row){
+    html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px">'
+      +'<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin-bottom:2px">'+row[0]+'</div>'
+      +'<div style="font-size:12px;font-weight:600;color:var(--tx)">'+row[1]+'</div></div>';
+  });
+  html+='</div>'
+    +'<div style="font-size:10px;color:var(--mu)">⚠️ Wayne is INDOOR ONLY. If escaped, he may hide — use Orijen wet food or Greenies to coax out. Check under porches, inside vehicles, dense shrubs.</div></div>';
+  // Edit contacts
+  html+='<div class="card"><div class="ctitle"><span class="i">✏️</span> Edit Emergency Contacts</div>'
+    +'<div class="fgrid">'
+    +'<div class="fg"><label>24hr Emergency Vet Name</label><input type="text" id="sos-ervet" value="'+(d.ervet||'')+'" placeholder="e.g. VCA Vet Referral Center"></div>'
+    +'<div class="fg"><label>Emergency Vet Phone</label><input type="text" id="sos-erphone" value="'+(d.erphone||'')+'" placeholder="(000) 000-0000"></div>'
+    +'<div class="fg"><label>Regular Vet Name</label><input type="text" id="sos-vet" value="'+(d.vet||'')+'" placeholder="e.g. Banfield Pet Hospital"></div>'
+    +'<div class="fg"><label>Regular Vet Phone</label><input type="text" id="sos-vetphone" value="'+(d.vetphone||'')+'" placeholder="(000) 000-0000"></div>'
+    +'<div class="fg"><label>Your Phone (Avani)</label><input type="text" id="sos-owner" value="'+(d.owner||'')+'" placeholder="(000) 000-0000"></div>'
+    +'<div class="fg"><label>Pet Sitter Name & Phone</label><input type="text" id="sos-sitter" value="'+(d.sitter||'')+'" placeholder="Name · (000) 000-0000"></div>'
+    +'</div><button id="save-sos-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px;margin-top:8px">Save Contacts</button></div>';
+  // Pet sitter card
+  html+='<div class="card"><div class="ctitle"><span class="i">📋</span> Pet Sitter Instructions (Screenshot-Ready)</div>'
+    +'<div style="background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12px;color:var(--t2);line-height:2">'
+    +'<strong style="color:var(--tx)">🌅 Morning:</strong> ½ can Orijen wet + 2½ tbsp Orijen dry. Check both Veken water fountains — top off if low.<br>'
+    +'<strong style="color:var(--tx)">🌙 Evening:</strong> Same feeding as morning. Play with wand or laser for 15 min if possible.<br>'
+    +'<strong style="color:var(--tx)">🦷 Treats:</strong> 9 Greenies max per session, up to 2 sessions/day. No other human food.<br>'
+    +'<strong style="color:var(--tx)">🚽 Litter:</strong> Fumoi 95L is self-cleaning — just check waste drawer daily. No scooping needed.<br>'
+    +'<strong style="color:var(--tx)">💧 Water:</strong> Two Veken fountains — check level daily, top off with filtered water.<br>'
+    +'<strong style="color:var(--tx)">🐱 Personality:</strong> Friendly but may hide with new people initially. Give space — he\'ll warm up. Respond to his name "Wayne."<br>'
+    +'<strong style="color:var(--ro)">❌ NEVER give:</strong> Onions, garlic, grapes, chocolate, xylitol, lilies, Tylenol, or any human medication.<br>'
+    +'<strong style="color:var(--am)">🚨 Emergency:</strong> ASPCA Poison Control (888) 426-4435 · Then call Avani immediately.'
+    +'</div></div>';
+
+  el.innerHTML=html;
+  document.getElementById('save-sos-btn').addEventListener('click',function(){
+    saveSOS({ervet:document.getElementById('sos-ervet').value,erphone:document.getElementById('sos-erphone').value,vet:document.getElementById('sos-vet').value,vetphone:document.getElementById('sos-vetphone').value,owner:document.getElementById('sos-owner').value,sitter:document.getElementById('sos-sitter').value});
+    buildSOS();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  SUPPLIES
+// ═══════════════════════════════════════════════════
+var SUP_KEY='waynesworld_supplies_v1';
+function loadSup(){try{var r=localStorage.getItem(SUP_KEY);return r?JSON.parse(r):{};}catch(e){return{};}}
+function saveSup(d){try{localStorage.setItem(SUP_KEY,JSON.stringify(d));}catch(e){}}
+
+var SUPPLY_DEFS=[
+  {id:'orijen-wet',icon:'🥩',name:'Orijen Wet Food',unit:'cans',dailyUse:1,reorderAt:7,note:'½ can × 2 meals = 1 can/day. Buy in case of 12–24 cans.'},
+  {id:'orijen-dry',icon:'🌾',name:'Orijen Dry Kibble',unit:'lbs',dailyUse:0.07,reorderAt:7,note:'2½ tbsp × 2 = ~5 tbsp/day ≈ 0.07 lbs. 5lb bag lasts ~70 days.'},
+  {id:'greenies',icon:'🦷',name:'Greenies Dental Treats',unit:'treats',dailyUse:18,reorderAt:5,note:'9 × 2 sessions = 18/day. 60-ct bag lasts ~3 days. Buy bulk.'},
+  {id:'veken-filter',icon:'🔄',name:'Veken Filters (×2 fountains)',unit:'sets',dailyUse:0,reorderAt:7,note:'Replace every 2–4 weeks per fountain. Keep 4-pack on hand.'},
+  {id:'fumoi-liner',icon:'🗑️',name:'Fumoi Liner Bags',unit:'bags',dailyUse:0.14,reorderAt:7,note:'~1 bag/week. 60-pack lasts ~8 months for 1 cat.'},
+  {id:'litter',icon:'⚗️',name:'Cat Litter (clumping/silica)',unit:'lbs',dailyUse:0.2,reorderAt:7,note:'~40lb bag lasts ~6 months solo. Fumoi-compatible types only.'}
+];
+
+function calcDaysLeft(s,entry){if(!entry||!entry.qty)return null;if(s.dailyUse===0)return null;return Math.floor(entry.qty/s.dailyUse);}
+
+function buildSupplies(){
+  var d=loadSup();var el=document.getElementById('page-supplies');var html='';
+  html+='<div style="font-family:\'Cinzel\',serif;font-size:20px;margin-bottom:4px">Supply Reorder Tracker 🛒</div>'
+    +'<div style="font-size:11px;color:var(--t2);margin-bottom:14px">Enter how much you have on hand — Wayne\'s World calculates your runout date automatically.</div>';
+  var lowItems=SUPPLY_DEFS.filter(function(s){var e=d[s.id];var dl=calcDaysLeft(s,e||{});return dl!==null&&dl<=s.reorderAt;});
+  if(lowItems.length>0){
+    html+='<div style="background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);border-radius:10px;padding:12px 14px;margin-bottom:12px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--ro)">🛒 '+lowItems.length+' item'+(lowItems.length>1?'s':'')+' running low: '+lowItems.map(function(s){return s.name;}).join(', ')+'</div></div>';
+  }
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:14px">';
+  SUPPLY_DEFS.forEach(function(s){
+    var entry=d[s.id]||{};var dl=calcDaysLeft(s,entry);
+    var pct=dl!==null?Math.max(0,Math.min(100,Math.round(dl/30*100))):0;
+    var col=dl===null?'var(--mu)':dl<=s.reorderAt?'var(--ro)':dl<=s.reorderAt*2?'var(--am)':'var(--gn)';
+    html+='<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:14px">'
+      +'<div style="font-size:14px;margin-bottom:2px">'+s.icon+' <strong>'+s.name+'</strong></div>'
+      +'<div style="font-size:10px;color:var(--mu);margin-bottom:10px">'+s.note+'</div>'
+      +(dl!==null?'<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-family:\'DM Mono\',monospace;font-size:10px;margin-bottom:4px"><span style="color:var(--t2)">Days remaining</span><span style="color:'+col+';font-weight:700">'+dl+'d</span></div>'
+        +'<div style="height:6px;background:var(--bd);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:3px"></div></div>'
+        +(dl<=s.reorderAt?'<div style="font-size:10px;color:var(--ro);font-weight:700;margin-top:4px">🛒 Reorder now!</div>':'')+'</div>'
+        :'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu);margin-bottom:8px">Update stock below</div>')
+      +'<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:7px">'
+      +'<div class="fg" style="flex:1"><label>Qty on hand</label><input type="number" class="sup-qty" data-id="'+s.id+'" value="'+(entry.qty||'')+'" placeholder="0" min="0" step="0.1"></div>'
+      +'<div class="fg" style="flex:0 0 60px"><label>Unit</label><input type="text" value="'+s.unit+'" disabled style="opacity:.4"></div></div>'
+      +(entry.updated?'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-bottom:5px">Updated: '+new Date(entry.updated).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div>':'')
+      +'<button class="sup-save" data-id="'+s.id+'" style="font-family:\'DM Mono\',monospace;font-size:11px;background:var(--am);color:#0d0f14;border:none;border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:700;width:100%">✓ Update Stock</button></div>';
+  });
+  html+='</div>';
+  // Shopping list
+  var needItems=SUPPLY_DEFS.filter(function(s){var e=d[s.id];var dl=calcDaysLeft(s,e||{});return !dl||dl<=14;});
+  html+='<div class="card"><div class="ctitle"><span class="i">📝</span> Auto Shopping List</div>';
+  if(needItems.length===0){html+='<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--gn)">✅ All supplies well-stocked! Check back as items run low.</div>';}
+  else{html+=needItems.map(function(s){return'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px"><span style="font-size:14px">'+s.icon+'</span><span style="flex:1;color:var(--tx)">'+s.name+'</span><span class="badge br">Restock</span></div>';}).join('');}
+  html+='</div>';
+  el.innerHTML=html;
+  el.querySelectorAll('.sup-save').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var id=this.getAttribute('data-id');var qty=parseFloat(el.querySelector('.sup-qty[data-id="'+id+'"]').value)||0;
+      var d2=loadSup();d2[id]={qty:qty,updated:new Date().toISOString()};saveSup(d2);buildSupplies();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  MILESTONES
+// ═══════════════════════════════════════════════════
+var MILE_KEY='waynesworld_milestones_v1';
+function loadMile(){try{var r=localStorage.getItem(MILE_KEY);return r?JSON.parse(r):[];}catch(e){return[];}}
+function saveMile(d){try{localStorage.setItem(MILE_KEY,JSON.stringify(d));}catch(e){}}
+var MILE_CATS=[
+  {id:'training',icon:'🎓',label:'Training Win',col:'var(--am)'},
+  {id:'adventure',icon:'🎒',label:'Adventure',col:'var(--tl)'},
+  {id:'health',icon:'💪',label:'Health',col:'var(--gn)'},
+  {id:'first',icon:'⭐',label:'First Time!',col:'var(--vi)'},
+  {id:'funny',icon:'😂',label:'Funny Moment',col:'var(--or)'},
+  {id:'love',icon:'❤️',label:'Heartwarming',col:'var(--ro)'}
+];
+var selMileCat=MILE_CATS[0].id;
+
+function buildMilestones(){
+  var miles=loadMile();var el=document.getElementById('page-milestones');var html='';
+  html+='<div style="font-family:\'Cinzel\',serif;font-size:20px;margin-bottom:4px">Wayne\'s Milestone Journal 🎉</div>'
+    +'<div style="font-size:11px;color:var(--t2);margin-bottom:14px">Every first, win, adventure, and funny moment — captured forever.</div>';
+  // Add form
+  html+='<div class="card"><div class="ctitle"><span class="i">✏️</span> Add Milestone</div>'
+    +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="mile-date" value="'+new Date().toISOString().split('T')[0]+'"></div>'
+    +'<div class="fg"><label>Title</label><input type="text" id="mile-title" placeholder="e.g. First backpack walk!"></div></div>'
+    +'<div style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:6px">Category</div>'
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap" id="mile-cat-grp">'
+    +MILE_CATS.map(function(c,i){return'<button class="tog'+(i===0?' sel-amber':'')+'" data-cat="'+c.id+'">'+c.icon+' '+c.label+'</button>';}).join('')
+    +'</div></div>'
+    +'<div class="fg" style="margin-bottom:10px"><label>Story</label><textarea id="mile-note" placeholder="What happened? How did Wayne react? Make it a memory worth keeping."></textarea></div>'
+    +'<button id="save-mile-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px">🎉 Save Milestone</button></div>';
+  // Stats row
+  if(miles.length>0){
+    html+='<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">';
+    MILE_CATS.forEach(function(c){var cnt=miles.filter(function(m){return m.cat===c.id;}).length;if(cnt>0)html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700">'+c.icon+' '+cnt+'</div>';});
+    html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:6px 11px;font-size:11px;font-weight:700;color:var(--am)">'+miles.length+' total</div>';
+    html+='</div>';
+  }
+  // Timeline
+  if(miles.length===0){html+='<div class="empty"><div class="eico">🎉</div><p>No milestones yet!<br>Try: "First day home" or "First Fumoi use" or "First time I heard him purr."</p></div>';}
+  else{
+    html+='<div>';
+    miles.slice().reverse().forEach(function(m,i){
+      var ri=miles.length-1-i;var cat=MILE_CATS.find(function(c){return c.id===m.cat;})||MILE_CATS[0];
+      html+='<div style="display:flex;gap:12px;margin-bottom:12px">'
+        +'<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">'
+        +'<div style="width:30px;height:30px;border-radius:50%;background:'+cat.col+';display:flex;align-items:center;justify-content:center;font-size:13px">'+cat.icon+'</div>'
+        +(i<miles.length-1?'<div style="width:2px;flex:1;background:var(--bd);margin:4px 0;min-height:16px"></div>':'')+'</div>'
+        +'<div style="background:var(--s);border:1px solid var(--bd);border-radius:var(--r);padding:12px;flex:1;min-width:0">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;margin-bottom:4px">'
+        +'<div><div style="font-size:12px;font-weight:700;color:var(--tx)">'+m.title+'</div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:'+cat.col+'">'+cat.label+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+        +'<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--mu)">'+new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span>'
+        +'<button class="del-mile" data-i="'+ri+'" style="background:none;border:none;color:var(--mu);cursor:pointer;font-size:11px">✕</button></div></div>'
+        +(m.note?'<div style="font-size:11px;color:var(--t2);line-height:1.7">'+m.note+'</div>':'')+'</div></div>';
+    });
+    html+='</div>';
+  }
+  el.innerHTML=html;
+  selMileCat=MILE_CATS[0].id;
+  el.querySelectorAll('#mile-cat-grp .tog').forEach(function(btn){
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      el.querySelectorAll('#mile-cat-grp .tog').forEach(function(b){b.className='tog';});
+      this.classList.add('sel-amber');selMileCat=this.getAttribute('data-cat');
+    });
+  });
+  document.getElementById('save-mile-btn').addEventListener('click',function(){
+    var title=document.getElementById('mile-title').value.trim();var date=document.getElementById('mile-date').value;
+    if(!title||!date)return;
+    var ms=loadMile();ms.push({date:date,title:title,cat:selMileCat,note:document.getElementById('mile-note').value.trim()});
+    ms.sort(function(a,b){return a.date.localeCompare(b.date);});saveMile(ms);buildMilestones();
+  });
+  el.querySelectorAll('.del-mile').forEach(function(btn){
+    btn.addEventListener('click',function(){var ms=loadMile();ms.splice(+this.getAttribute('data-i'),1);saveMile(ms);buildMilestones();});
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  BUDGET
+// ═══════════════════════════════════════════════════
+var BUD_KEY='waynesworld_budget_v1';
+function loadBud(){try{var r=localStorage.getItem(BUD_KEY);return r?JSON.parse(r):[];}catch(e){return[];}}
+function saveBud(d){try{localStorage.setItem(BUD_KEY,JSON.stringify(d));}catch(e){}}
+var BUD_CATS=[
+  {id:'food',icon:'🍽️',label:'Food',col:'#f5a623'},
+  {id:'treats',icon:'🦷',label:'Treats',col:'#2dd4bf'},
+  {id:'vet',icon:'🏥',label:'Vet & Medical',col:'#fb7185'},
+  {id:'supplies',icon:'🛒',label:'Supplies',col:'#a78bfa'},
+  {id:'gear',icon:'🎒',label:'Gear & Toys',col:'#4ade80'},
+  {id:'insurance',icon:'📋',label:'Pet Insurance',col:'#fb923c'},
+  {id:'grooming',icon:'✂️',label:'Grooming',col:'#60a5fa'},
+  {id:'other',icon:'📦',label:'Other',col:'#5a6180'}
+];
+
+function buildBudget(){
+  var expenses=loadBud();var el=document.getElementById('page-budget');var html='';
+  var total=expenses.reduce(function(s,e){return s+(+e.amount||0);},0);
+  var now=new Date();
+  var thisMonth=expenses.filter(function(e){var d=new Date(e.date);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();}).reduce(function(s,e){return s+(+e.amount||0);},0);
+  var months={};expenses.forEach(function(e){var k=e.date.slice(0,7);months[k]=(months[k]||0)+(+e.amount||0);});
+  var mc=Object.keys(months).length;var avg=mc?total/mc:0;
+
+  html+='<div style="font-family:\'Cinzel\',serif;font-size:20px;margin-bottom:4px">Wayne\'s Budget 💰</div>'
+    +'<div style="font-size:11px;color:var(--t2);margin-bottom:14px">Track every dollar you spend on Wayne — food, vet, gear, and everything in between.</div>';
+  // Stats
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:14px">';
+  [['This Month','$'+thisMonth.toFixed(2),'var(--am)'],['All Time','$'+total.toFixed(2),'var(--gn)'],['Monthly Avg','$'+avg.toFixed(2),'var(--tl)'],['Entries',expenses.length,'var(--vi)']].forEach(function(s){
+    html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;text-align:center">'
+      +'<div style="font-size:18px;font-weight:800;color:'+s[2]+'">'+s[1]+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-top:2px">'+s[0]+'</div></div>';
+  });
+  html+='</div>';
+  // Category breakdown
+  if(expenses.length>0){
+    html+='<div class="card"><div class="ctitle"><span class="i">📊</span> By Category</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">';
+    BUD_CATS.forEach(function(cat){
+      var ct=expenses.filter(function(e){return e.cat===cat.id;}).reduce(function(s,e){return s+(+e.amount||0);},0);
+      if(!ct)return;
+      var pct=total?Math.round(ct/total*100):0;
+      html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:10px">'
+        +'<div style="font-size:11px;margin-bottom:4px">'+cat.icon+' <strong>'+cat.label+'</strong></div>'
+        +'<div style="font-size:14px;font-weight:800;color:'+cat.col+'">$'+ct.toFixed(2)+'</div>'
+        +'<div style="height:4px;background:var(--bd);border-radius:2px;margin-top:5px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+cat.col+';border-radius:2px"></div></div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--mu);margin-top:3px">'+pct+'%</div></div>';
+    });
+    html+='</div></div>';
+  }
+  // Add form
+  html+='<div class="card"><div class="ctitle"><span class="i">➕</span> Add Expense</div>'
+    +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="bud-date" value="'+now.toISOString().split('T')[0]+'"></div>'
+    +'<div class="fg"><label>Amount ($)</label><input type="number" id="bud-amount" placeholder="0.00" step="0.01" min="0"></div>'
+    +'<div class="fg"><label>Category</label><select id="bud-cat">'+BUD_CATS.map(function(c){return'<option value="'+c.id+'">'+c.icon+' '+c.label+'</option>';}).join('')+'</select></div>'
+    +'<div class="fg"><label>Description</label><input type="text" id="bud-desc" placeholder="e.g. Orijen 12-pack cans"></div></div>'
+    +'<button id="save-bud-btn" class="btn btn-am" style="font-size:12px;padding:8px 16px">Add Expense</button></div>';
+  // Log
+  html+='<div class="card"><div class="ctitle"><span class="i">📋</span> Expense Log</div>';
+  if(!expenses.length){html+='<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--mu)">No expenses yet — start tracking Wayne\'s costs!</div>';}
+  else{
+    html+='<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead><tbody>';
+    expenses.slice().reverse().forEach(function(e,i){
+      var ri=expenses.length-1-i;var cat=BUD_CATS.find(function(c){return c.id===e.cat;})||BUD_CATS[7];
+      html+='<tr><td style="white-space:nowrap;font-family:\'DM Mono\',monospace;font-size:10px">'+new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</td>'
+        +'<td><span class="badge by">'+cat.icon+' '+cat.label+'</span></td>'
+        +'<td style="color:var(--tx)">'+e.desc+'</td>'
+        +'<td style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--am)">$'+parseFloat(e.amount).toFixed(2)+'</td>'
+        +'<td><button class="del-bud" data-i="'+ri+'" style="background:none;border:none;color:var(--mu);cursor:pointer;font-size:11px">✕</button></td></tr>';
+    });
+    html+='</tbody></table></div>';
+  }
+  html+='</div>';
+  // Estimate card
+  html+='<div class="card" style="background:linear-gradient(135deg,#0d1a14,#0d1428);border-color:#1a2a1a">'
+    +'<div class="ctitle" style="color:var(--gn)"><span class="i">📈</span> Wayne\'s Estimated Monthly Cost</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px">';
+  [['Orijen Wet (30 cans)','~$45–65'],['Orijen Dry (5lb bag)','~$22–28'],['Greenies (bulk 180-ct)','~$12–16'],['Veken Filters (2×2)','~$8–12'],['Fumoi Liners (4–6 bags)','~$4–6'],['Litter (~6lbs)','~$5–9'],['Vet (annual amortized)','~$20–40'],['💰 Total Estimate','~$116–176/mo']].forEach(function(r,i){
+    html+='<div style="background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px">'
+      +'<div style="font-size:10px;color:var(--mu)">'+r[0]+'</div>'
+      +'<div style="font-size:13px;font-weight:800;color:'+(i===7?'var(--gn)':'var(--am)')+'">'+r[1]+'</div></div>';
+  });
+  html+='</div></div>';
+
+  el.innerHTML=html;
+  document.getElementById('save-bud-btn').addEventListener('click',function(){
+    var amt=document.getElementById('bud-amount').value;var desc=document.getElementById('bud-desc').value.trim();var date=document.getElementById('bud-date').value;
+    if(!amt||!date||!desc)return;
+    var ex=loadBud();ex.push({date:date,amount:parseFloat(amt),cat:document.getElementById('bud-cat').value,desc:desc});
+    ex.sort(function(a,b){return a.date.localeCompare(b.date);});saveBud(ex);buildBudget();
+  });
+  el.querySelectorAll('.del-bud').forEach(function(btn){
+    btn.addEventListener('click',function(){var ex=loadBud();ex.splice(+this.getAttribute('data-i'),1);saveBud(ex);buildBudget();});
+  });
+}
+</script>
+
+</body>
+</html>
