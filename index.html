@@ -1809,7 +1809,7 @@ function buildMilestones(){
     +'<div style="font-size:11px;color:var(--t2);margin-bottom:14px">Every first, win, adventure, and funny moment — captured forever.</div>';
   // Add form
   html+='<div class="card"><div class="ctitle"><span class="i">✏️</span> Add Milestone</div>'
-    +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="mile-date" value="'+new Date().toISOString().split('T')[0]+'"></div>'
+    +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="mile-date" value="'+new Date()..toLocaleDateString('en-CA')+'"></div>'
     +'<div class="fg"><label>Title</label><input type="text" id="mile-title" placeholder="e.g. First backpack walk!"></div></div>'
     +'<div style="margin-bottom:10px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin-bottom:6px">Category</div>'
     +'<div style="display:flex;gap:5px;flex-wrap:wrap" id="mile-cat-grp">'
@@ -1918,7 +1918,7 @@ function buildBudget(){
   }
   // Add form
   html+='<div class="card"><div class="ctitle"><span class="i">➕</span> Add Expense</div>'
-    +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="bud-date" value="'+now.toISOString().split('T')[0]+'"></div>'
+    +'<div class="fgrid"><div class="fg"><label>Date</label><input type="date" id="bud-date" value="'+now.toLocaleDateString('en-CA')+'"></div>'
     +'<div class="fg"><label>Amount ($)</label><input type="number" id="bud-amount" placeholder="0.00" step="0.01" min="0"></div>'
     +'<div class="fg"><label>Category</label><select id="bud-cat">'+BUD_CATS.map(function(c){return'<option value="'+c.id+'">'+c.icon+' '+c.label+'</option>';}).join('')+'</select></div>'
     +'<div class="fg"><label>Description</label><input type="text" id="bud-desc" placeholder="e.g. Orijen 12-pack cans"></div></div>'
