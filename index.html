@@ -484,7 +484,7 @@ function loadFromStorage() {
 
 // ── INIT ───────────────────────────────────────────────
 loadFromStorage();
-document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('f-date').value = new Date().toLocaleDateString('en-CA');
 if (log.length > 0) {
   renderLog();
   updateStats();
